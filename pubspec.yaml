@@ -1,0 +1,49 @@
+name: my_planner_app
+description: "A modern Android-only planner and Pomodoro study app with multi-language support, dark glassmorphism, and offline Supabase sync."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Required core dependencies
+  supabase_flutter: ^2.8.0
+  shared_preferences: ^2.3.5
+  easy_localization: ^3.0.7
+  just_audio: ^0.9.42
+  intl: 0.20.3
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+
+  # Visual and icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/translations/
+    - assets/audio/
+    - assets/images/
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.jpg"
+  adaptive_icon_background: "#1E2128"
+  adaptive_icon_foreground: "assets/icon/app_icon.jpg"
+
