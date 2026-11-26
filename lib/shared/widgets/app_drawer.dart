@@ -11,6 +11,7 @@ import '../../../core/services/local_storage_service.dart';
 import 'language_dropdown_button.dart';
 import 'bouncy_button.dart';
 import 'pulsing_badge.dart';
+import '../../features/feedback/widgets/feedback_dialog.dart';
 
 enum MainModule {
   planner,
@@ -298,11 +299,26 @@ class AppDrawer extends StatelessWidget {
                   // Daily Reminder Settings Button
                   _staggerItem(3, _buildDailyReminderTile(context)),
 
+                  // Feedback & Suggestions Button
+                  _staggerItem(
+                    4,
+                    _buildNavItem(
+                      context: context,
+                      icon: Icons.rate_review_outlined,
+                      title: LocaleKeys.feedbackTitle.tr(),
+                      isSelected: false,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        FeedbackDialog.show(context);
+                      },
+                    ),
+                  ),
+
                   const Divider(color: AppColors.glassBorder, height: 24),
 
                   // Language Selector Section
                   _staggerItem(
-                    4,
+                    5,
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

@@ -221,5 +221,24 @@
   "reminder_quiet_hours": "Tungi vaqtda (22:00 - 08:00) bezovta qilinmaydi",
   "plan_reminder_notification_title": "Reja eslatmasi",
   "plan_reminder_single_msg": "Eslatma: \"{}\" rejasini bajarish vaqti keldi!",
-  "plan_reminder_multi_msg": "Eslatma: \"{}\" va yana {} ta rejangiz kutilmoqda!"
+  "plan_reminder_multi_msg": "Eslatma: \"{}\" va yana {} ta rejangiz kutilmoqda!",
+
+  "feedback_title": "Fikr-mulohaza va takliflar",
+  "feedback_subtitle": "Ilovani yanada yaxshilash uchun o'z fikr va takliflaringizni yuboring",
+  "feedback_email_or_login": "Sizning email yoki loginingiz",
+  "feedback_email_hint": "Masalan: ali@gmail.com",
+  "feedback_category": "Turkum",
+  "feedback_cat_suggestion": "Taklif",
+  "feedback_cat_bug": "Xatolik",
+  "feedback_cat_other": "Boshqa",
+  "feedback_rating": "Baholash",
+  "feedback_message": "Xabaringiz / Fikringiz",
+  "feedback_message_hint": "Fikr, taklif yoki duch kelgan xatolikni batafsil yozing...",
+  "feedback_submit": "Yuborish",
+  "feedback_submitting": "Yuborilmoqda...",
+  "feedback_success_title": "Rahmat!",
+  "feedback_success_msg": "Fikr-mulohazangiz muvaffaqiyatli qabul qilindi. Yordamingiz uchun minnatdormiz!",
+  "feedback_error_empty": "Iltimos, xabaringizni yozing",
+  "feedback_error_email": "Iltimos, emailingiz yoki loginingizni kiriting",
+  "feedback_sender": "Yuboruvchi"
 }

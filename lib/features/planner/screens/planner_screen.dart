@@ -16,6 +16,7 @@ import '../widgets/calendar_navigator_bar.dart';
 import '../widgets/note_card.dart';
 import '../widgets/add_edit_note_dialog.dart';
 import 'yearly_dashboard_screen.dart';
+import '../../feedback/widgets/feedback_dialog.dart';
 
 class PlannerScreen extends StatelessWidget {
   final PlannerController controller;
@@ -439,6 +440,13 @@ class PlannerScreen extends StatelessWidget {
                   );
                 },
               ),
+              // Feedback shortcut button on Web / wide viewports
+              if (kIsWeb || MediaQuery.sizeOf(context).width >= 640)
+                IconButton(
+                  icon: const Icon(Icons.rate_review_outlined, color: AppColors.textSecondary, size: 21),
+                  tooltip: LocaleKeys.feedbackTitle.tr(),
+                  onPressed: () => FeedbackDialog.show(context),
+                ),
               // Bulletproof Cloud Sync / Guest Status Indicator
               BouncyButton(
                 onTap: isGuest

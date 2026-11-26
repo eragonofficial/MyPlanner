@@ -221,5 +221,24 @@
   "reminder_quiet_hours": "Quiet hours (22:00 - 08:00) — no night notifications",
   "plan_reminder_notification_title": "Plan Reminder",
   "plan_reminder_single_msg": "Reminder: Time to complete your plan \"{}\"!",
-  "plan_reminder_multi_msg": "Reminder: \"{}\" and {} more plans are pending!"
+  "plan_reminder_multi_msg": "Reminder: \"{}\" and {} more plans are pending!",
+
+  "feedback_title": "Feedback & Suggestions",
+  "feedback_subtitle": "Send your feedback and ideas to help us improve the app",
+  "feedback_email_or_login": "Your Email or Login",
+  "feedback_email_hint": "E.g., user@example.com",
+  "feedback_category": "Category",
+  "feedback_cat_suggestion": "Suggestion",
+  "feedback_cat_bug": "Bug Report",
+  "feedback_cat_other": "Other",
+  "feedback_rating": "Rating",
+  "feedback_message": "Your message / feedback",
+  "feedback_message_hint": "Describe your suggestion, feedback, or issue in detail...",
+  "feedback_submit": "Send Feedback",
+  "feedback_submitting": "Sending...",
+  "feedback_success_title": "Thank you!",
+  "feedback_success_msg": "Your feedback has been successfully submitted. Thank you for your contribution!",
+  "feedback_error_empty": "Please enter your message",
+  "feedback_error_email": "Please enter your email or login",
+  "feedback_sender": "Sender"
 }

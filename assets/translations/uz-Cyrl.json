@@ -221,5 +221,24 @@
   "reminder_quiet_hours": "Тунги вақтда (22:00 - 08:00) безовта қилинмайди",
   "plan_reminder_notification_title": "Режа эслатмаси",
   "plan_reminder_single_msg": "Эслатма: \"{}\" режасини бажариш вақти келди!",
-  "plan_reminder_multi_msg": "Эслатма: \"{}\" ва яна {} та режангиз кутилмоқда!"
+  "plan_reminder_multi_msg": "Эслатма: \"{}\" ва яна {} та режангиз кутилмоқда!",
+
+  "feedback_title": "Фикр-мулоҳаза ва таклифлар",
+  "feedback_subtitle": "Иловани янада яхшилаш учун ўз фикр ва таклифларингизни юборинг",
+  "feedback_email_or_login": "Сизнинг email ёки логинингиз",
+  "feedback_email_hint": "Масалан: ali@gmail.com",
+  "feedback_category": "Туркум",
+  "feedback_cat_suggestion": "Таклиф",
+  "feedback_cat_bug": "Хатолик",
+  "feedback_cat_other": "Бошқа",
+  "feedback_rating": "Баҳолаш",
+  "feedback_message": "Хабарингиз / Фикрингиз",
+  "feedback_message_hint": "Фикр, таклиф ёки дуч келган хатоликни батафсил ёзинг...",
+  "feedback_submit": "Юбориш",
+  "feedback_submitting": "Юборилмоқда...",
+  "feedback_success_title": "Раҳмат!",
+  "feedback_success_msg": "Фикр-мулоҳазангиз муваффақиятли қабул қилинди. Ёрдамингиз учун миннатдормиз!",
+  "feedback_error_empty": "Илтимос, хабарингизни ёзинг",
+  "feedback_error_email": "Илтимос, эмаилингиз ёки логинингизни киритинг",
+  "feedback_sender": "Юборувчи"
 }

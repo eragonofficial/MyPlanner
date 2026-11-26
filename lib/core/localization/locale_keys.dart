@@ -236,4 +236,24 @@ class LocaleKeys {
   static const String planReminderNotificationTitle = 'plan_reminder_notification_title';
   static const String planReminderSingleMsg = 'plan_reminder_single_msg';
   static const String planReminderMultiMsg = 'plan_reminder_multi_msg';
+
+  // Feedback & Suggestions
+  static const String feedbackTitle = 'feedback_title';
+  static const String feedbackSubtitle = 'feedback_subtitle';
+  static const String feedbackEmailOrLogin = 'feedback_email_or_login';
+  static const String feedbackEmailHint = 'feedback_email_hint';
+  static const String feedbackCategory = 'feedback_category';
+  static const String feedbackCatSuggestion = 'feedback_cat_suggestion';
+  static const String feedbackCatBug = 'feedback_cat_bug';
+  static const String feedbackCatOther = 'feedback_cat_other';
+  static const String feedbackRating = 'feedback_rating';
+  static const String feedbackMessage = 'feedback_message';
+  static const String feedbackMessageHint = 'feedback_message_hint';
+  static const String feedbackSubmit = 'feedback_submit';
+  static const String feedbackSubmitting = 'feedback_submitting';
+  static const String feedbackSuccessTitle = 'feedback_success_title';
+  static const String feedbackSuccessMsg = 'feedback_success_msg';
+  static const String feedbackErrorEmpty = 'feedback_error_empty';
+  static const String feedbackErrorEmail = 'feedback_error_email';
+  static const String feedbackSender = 'feedback_sender';
 }

@@ -8,6 +8,7 @@ import 'widgets/interactive_try_live_widget.dart';
 import 'widgets/shimmer_cta_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
 import '../../../shared/widgets/language_dropdown_button.dart';
+import '../feedback/widgets/feedback_dialog.dart';
 
 class LandingPage extends StatefulWidget {
   final VoidCallback onSignInPressed;
@@ -161,6 +162,21 @@ class _LandingPageState extends State<LandingPage>
           ),
 
           const Spacer(),
+
+          // Feedback Button
+          TextButton.icon(
+            onPressed: () => FeedbackDialog.show(context),
+            icon: const Icon(Icons.rate_review_outlined, size: 16, color: AppColors.textSecondary),
+            label: Text(
+              LocaleKeys.feedbackTitle.tr(),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // Language Selector Dropdown Button
           const LanguageDropdownButton(),
@@ -461,9 +477,31 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Widget _buildFooter(BuildContext context) {
-    return Text(
-      '${LocaleKeys.appName.tr()} • 2026 • Linear / Notion / Framer inspired',
-      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton.icon(
+              onPressed: () => FeedbackDialog.show(context),
+              icon: const Icon(Icons.rate_review_outlined, size: 16, color: AppColors.primaryCyan),
+              label: Text(
+                LocaleKeys.feedbackTitle.tr(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.primaryCyan,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${LocaleKeys.appName.tr()} • 2026',
+          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+        ),
+      ],
     );
   }
 }

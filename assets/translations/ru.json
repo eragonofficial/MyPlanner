@@ -221,5 +221,24 @@
   "reminder_quiet_hours": "Ночной режим (22:00 - 08:00) — без уведомлений",
   "plan_reminder_notification_title": "Напоминание о плане",
   "plan_reminder_single_msg": "Напоминание: пора выполнить план «{}»!",
-  "plan_reminder_multi_msg": "Напоминание: план «{}» и ещё {} ожидают выполнения!"
+  "plan_reminder_multi_msg": "Напоминание: план «{}» и ещё {} ожидают выполнения!",
+
+  "feedback_title": "Отзывы и предложения",
+  "feedback_subtitle": "Отправьте свои идеи и отзывы, чтобы сделать приложение лучше",
+  "feedback_email_or_login": "Ваш Email или логин",
+  "feedback_email_hint": "Например: user@example.com",
+  "feedback_category": "Категория",
+  "feedback_cat_suggestion": "Предложение",
+  "feedback_cat_bug": "Ошибка",
+  "feedback_cat_other": "Другое",
+  "feedback_rating": "Оценка",
+  "feedback_message": "Ваше сообщение / отзыв",
+  "feedback_message_hint": "Опишите идею, предложение или проблему подробно...",
+  "feedback_submit": "Отправить",
+  "feedback_submitting": "Отправка...",
+  "feedback_success_title": "Спасибо!",
+  "feedback_success_msg": "Ваш отзыв успешно получен. Спасибо за ваш вклад!",
+  "feedback_error_empty": "Пожалуйста, введите ваше сообщение",
+  "feedback_error_email": "Пожалуйста, введите ваш email или логин",
+  "feedback_sender": "Отправитель"
 }

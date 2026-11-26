@@ -221,5 +221,24 @@
   "reminder_quiet_hours": "야간 (22:00 ~ 08:00) 방해 금지 모드",
   "plan_reminder_notification_title": "계획 알림",
   "plan_reminder_single_msg": "알림: \"{}\" 계획을 완료할 시간입니다!",
-  "plan_reminder_multi_msg": "알림: \"{}\" 외 {}개의 미완료 계획이 대기 중입니다!"
+  "plan_reminder_multi_msg": "알림: \"{}\" 외 {}개의 미완료 계획이 대기 중입니다!",
+
+  "feedback_title": "피드백 및 제안",
+  "feedback_subtitle": "앱을 개선하는 데 도움이 되는 피드백과 아이디어를 보내주세요",
+  "feedback_email_or_login": "이메일 또는 아이디",
+  "feedback_email_hint": "예: user@example.com",
+  "feedback_category": "카테고리",
+  "feedback_cat_suggestion": "제안",
+  "feedback_cat_bug": "버그 신고",
+  "feedback_cat_other": "기타",
+  "feedback_rating": "평점",
+  "feedback_message": "메시지 / 피드백",
+  "feedback_message_hint": "제안, 피드백 또는 문제를 자세히 작성해 주세요...",
+  "feedback_submit": "피드백 보내기",
+  "feedback_submitting": "전송 중...",
+  "feedback_success_title": "감사합니다!",
+  "feedback_success_msg": "피드백이 성공적으로 제출되었습니다. 소중한 의견 감사합니다!",
+  "feedback_error_empty": "메시지를 입력해 주세요",
+  "feedback_error_email": "이메일 또는 아이디를 입력해 주세요",
+  "feedback_sender": "보낸 사람"
 }
