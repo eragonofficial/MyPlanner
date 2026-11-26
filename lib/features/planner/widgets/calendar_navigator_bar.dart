@@ -47,6 +47,8 @@ class CalendarNavigatorBar extends StatelessWidget {
         return _buildMonthlyNavigator(context);
       case PeriodType.yearly:
         return _buildYearlyNavigator(context);
+      case null:
+        return const SizedBox.shrink();
     }
   }
 
@@ -390,11 +392,11 @@ class CalendarNavigatorBar extends StatelessWidget {
                 children: [
                   Text(
                     '$selectedYear',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
-                      color: AppColors.textPrimary,
+                      color: isCurrentYear ? AppColors.primaryCyan : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 8),

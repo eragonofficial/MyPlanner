@@ -19,7 +19,7 @@ class PomodoroController extends ChangeNotifier {
   int _targetSessions = 4;
   int _completedSessions = 0;
 
-  AmbientSound _activeSound = AmbientSound.none;
+  final Set<AmbientSound> _activeSounds = {};
 
   // Callbacks
   Function(String title, String message)? onNotification;
@@ -38,8 +38,10 @@ class PomodoroController extends ChangeNotifier {
   bool get isPaused => _isPaused;
   int get targetSessions => _targetSessions;
   int get completedSessions => _completedSessions;
-  AmbientSound get activeSound => _activeSound;
+  Set<AmbientSound> get activeSounds => Set.unmodifiable(_activeSounds);
   double get volume => _audioPlayer.volume;
+
+  bool isSoundActive(AmbientSound sound) => _activeSounds.contains(sound);
 
   double get progress {
     if (_totalSeconds == 0) return 0.0;
@@ -62,6 +64,8 @@ class PomodoroController extends ChangeNotifier {
   void setMode(PomodoroTimerMode newMode) {
     if (_mode == newMode) return;
     _mode = newMode;
+    // Hard-stop all audio when mode changes (25+5 <-> 50+10)
+    _stopAllAudioInternal();
     if (!_isRunning) {
       _resetToCurrentMode();
     }
@@ -84,6 +88,12 @@ class PomodoroController extends ChangeNotifier {
     _isPaused = false;
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
+
+    // Resume or start active ambient audio if in focus phase
+    if (_phase == PomodoroPhase.focus && _activeSounds.isNotEmpty) {
+      _audioPlayer.resumeAll();
+    }
+
     notifyListeners();
   }
 
@@ -91,6 +101,10 @@ class PomodoroController extends ChangeNotifier {
     if (!_isRunning || _isPaused) return;
     _isPaused = true;
     _ticker?.cancel();
+
+    // Pause all ambient sounds in sync with timer
+    _audioPlayer.pauseAll();
+
     notifyListeners();
   }
 
@@ -98,6 +112,12 @@ class PomodoroController extends ChangeNotifier {
     if (!_isRunning || !_isPaused) return;
     _isPaused = false;
     _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
+
+    // Resume ambient sounds in sync with timer
+    if (_phase == PomodoroPhase.focus && _activeSounds.isNotEmpty) {
+      _audioPlayer.resumeAll();
+    }
+
     notifyListeners();
   }
 
@@ -107,6 +127,10 @@ class PomodoroController extends ChangeNotifier {
     _isPaused = false;
     _phase = PomodoroPhase.focus;
     _resetToCurrentMode();
+
+    // Stop and clear audio on timer reset
+    _stopAllAudioInternal();
+
     notifyListeners();
   }
 
@@ -121,6 +145,10 @@ class PomodoroController extends ChangeNotifier {
 
   void _handlePhaseComplete() {
     _ticker?.cancel();
+
+    // The exact second focus session hits 00:00, immediately stop audio
+    // preventing any sound from playing longer than the chosen 25m or 50m session.
+    _audioPlayer.stopAll();
 
     if (_phase == PomodoroPhase.focus) {
       _completedSessions++;
@@ -155,28 +183,24 @@ class PomodoroController extends ChangeNotifier {
       _isRunning = true;
       _isPaused = false;
       _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
+
+      // Re-trigger active sounds for next focus session
+      _restartActiveSounds();
+
       notifyListeners();
     }
   }
 
-  // Ambient Audio
-  Future<void> setAmbientSound(AmbientSound sound) async {
-    if (_activeSound == sound) {
-      // Tapping active sound toggles off
-      _activeSound = AmbientSound.none;
-      await _audioPlayer.stop();
-      notifyListeners();
-      return;
-    }
+  void _stopAllAudioInternal() {
+    _activeSounds.clear();
+    _audioPlayer.stopAll();
+  }
 
-    _activeSound = sound;
-    notifyListeners();
-
-    if (sound == AmbientSound.none) {
-      await _audioPlayer.stop();
-    } else {
-      await _audioPlayer.playAmbientSound(
+  Future<void> _restartActiveSounds() async {
+    for (final sound in _activeSounds) {
+      await _audioPlayer.playSound(
         sound.keyName,
+        sound.assetPath,
         onAssetMissing: (soundKey) {
           if (onAssetMissingNotice != null) {
             onAssetMissingNotice!(soundKey);
@@ -184,6 +208,44 @@ class PomodoroController extends ChangeNotifier {
         },
       );
     }
+  }
+
+  // Multi-sound Ambient Audio Controls
+  Future<void> toggleAmbientSound(AmbientSound sound) async {
+    if (_activeSounds.contains(sound)) {
+      _activeSounds.remove(sound);
+      await _audioPlayer.stopSound(sound.keyName);
+      notifyListeners();
+      return;
+    }
+
+    _activeSounds.add(sound);
+    notifyListeners();
+
+    final success = await _audioPlayer.playSound(
+      sound.keyName,
+      sound.assetPath,
+      onAssetMissing: (soundKey) {
+        if (onAssetMissingNotice != null) {
+          onAssetMissingNotice!(soundKey);
+        }
+      },
+    );
+
+    // If timer is currently paused or in break phase, pause immediately after loading
+    if (_isPaused || _phase != PomodoroPhase.focus) {
+      await _audioPlayer.pauseAll();
+    }
+
+    if (!success) {
+      _activeSounds.remove(sound);
+    }
+    notifyListeners();
+  }
+
+  Future<void> clearAllSounds() async {
+    _activeSounds.clear();
+    await _audioPlayer.stopAll();
     notifyListeners();
   }
 
@@ -195,6 +257,7 @@ class PomodoroController extends ChangeNotifier {
   @override
   void dispose() {
     _ticker?.cancel();
+    _stopAllAudioInternal();
     _audioPlayer.dispose();
     super.dispose();
   }

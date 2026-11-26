@@ -6,39 +6,48 @@ import '../models/pomodoro_state.dart';
 import 'glass_card.dart';
 
 class AmbientSoundBar extends StatelessWidget {
-  final AmbientSound activeSound;
-  final Function(AmbientSound) onSelectSound;
+  final Set<AmbientSound> activeSounds;
+  final Function(AmbientSound) onToggleSound;
+  final VoidCallback onClearAllSounds;
   final double volume;
   final ValueChanged<double> onVolumeChanged;
+  final bool isPaused;
 
   const AmbientSoundBar({
     super.key,
-    required this.activeSound,
-    required this.onSelectSound,
+    required this.activeSounds,
+    required this.onToggleSound,
+    required this.onClearAllSounds,
     required this.volume,
     required this.onVolumeChanged,
+    this.isPaused = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasActive = activeSounds.isNotEmpty;
+
     return GlassCard(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       borderRadius: 18,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Header Row: Title, active count badge, master volume slider, mute all
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.nature_people_rounded,
+                    Icons.graphic_eq_rounded,
                     size: 18,
                     color: AppColors.primaryGreen,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
                     LocaleKeys.ambientTitle.tr(),
                     style: const TextStyle(
@@ -47,12 +56,51 @@ class AmbientSoundBar extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
+                  if (hasActive) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryGreen.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.primaryGreen, width: 0.8),
+                      ),
+                      child: Text(
+                        '${activeSounds.length}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-              if (activeSound != AmbientSound.none)
+
+              // Volume Slider & Mute All Controls
+              if (hasActive)
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.volume_down_rounded, size: 16, color: AppColors.textMuted),
+                    // Mute / Clear all button
+                    IconButton(
+                      icon: const Icon(
+                        Icons.volume_off_rounded,
+                        size: 18,
+                        color: AppColors.textMuted,
+                      ),
+                      tooltip: LocaleKeys.soundNone.tr(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: onClearAllSounds,
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.volume_down_rounded,
+                      size: 16,
+                      color: AppColors.textMuted,
+                    ),
                     SizedBox(
                       width: 80,
                       height: 20,
@@ -77,48 +125,86 @@ class AmbientSoundBar extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: AmbientSound.values.map((sound) {
-              final isSelected = activeSound == sound;
-              return GestureDetector(
-                onTap: () => onSelectSound(sound),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primaryGreen.withOpacity(0.2)
-                        : AppColors.glassSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primaryGreen : AppColors.glassBorder,
-                      width: isSelected ? 1.2 : 0.8,
+
+          const SizedBox(height: 12),
+
+          // Horizontal scrollable multi-ambient sound buttons dock
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: AmbientSound.values.map((sound) {
+                final isSelected = activeSounds.contains(sound);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => onToggleSound(sound),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primaryGreen.withOpacity(0.2)
+                            : AppColors.glassSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : AppColors.glassBorder,
+                          width: isSelected ? 1.4 : 0.8,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primaryGreen.withOpacity(0.25),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            sound.icon,
+                            size: 18,
+                            color: isSelected
+                                ? AppColors.primaryGreen
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            sound.labelKey.tr(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected
+                                  ? AppColors.primaryGreen
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          if (isSelected) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isPaused
+                                    ? Colors.amber
+                                    : AppColors.primaryGreen,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        sound.icon,
-                        size: 20,
-                        color: isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        sound.labelKey.tr(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? AppColors.primaryGreen : AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),

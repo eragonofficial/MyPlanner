@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorageService {
-  static const String _keyNotes = 'cached_notes_list';
+  static const String _keyNotesPrefix = 'cached_notes_user_';
+  static const String _keyPendingMutationsPrefix = 'pending_mutations_';
+
   static const String _keyLastSync = 'last_sync_timestamp';
   static const String _keyActivePeriod = 'active_period_type';
-  static const String _keyGuestMode = 'is_guest_mode_enabled';
+
+  // Daily Reminder keys
+  static const String _keyDailyReminderEnabled = 'daily_reminder_enabled';
+  static const String _keyDailyReminderTime = 'daily_reminder_time';
+  static const String _keyDailyReminderMsg = 'daily_reminder_message';
 
   final SharedPreferences _prefs;
 
@@ -13,26 +19,68 @@ class LocalStorageService {
 
   static Future<LocalStorageService> create() async {
     final prefs = await SharedPreferences.getInstance();
+    // Wipe any legacy unauthenticated guest plan caches
+    await prefs.remove('cached_notes_list');
+    await prefs.remove('guest_cached_notes_list');
+    await prefs.remove('is_guest_mode_enabled');
     return LocalStorageService(prefs);
   }
 
-  // Notes cache
-  Future<bool> saveNotes(List<Map<String, dynamic>> notesJson) async {
+  // User-scoped notes offline cache (Strictly authenticated users only)
+  Future<bool> saveNotes(List<Map<String, dynamic>> notesJson, {String? userId}) async {
+    if (userId == null || userId.isEmpty) {
+      // Unauthenticated users cannot save plans locally
+      return false;
+    }
     final jsonString = jsonEncode(notesJson);
-    return await _prefs.setString(_keyNotes, jsonString);
+    return await _prefs.setString('$_keyNotesPrefix$userId', jsonString);
   }
 
-  List<Map<String, dynamic>> getNotes() {
-    final jsonString = _prefs.getString(_keyNotes);
+  List<Map<String, dynamic>> getNotes({String? userId}) {
+    if (userId == null || userId.isEmpty) {
+      return [];
+    }
+    final jsonString = _prefs.getString('$_keyNotesPrefix$userId');
     if (jsonString == null || jsonString.isEmpty) {
       return [];
     }
     try {
       final decoded = jsonDecode(jsonString) as List;
       return decoded.map((item) => Map<String, dynamic>.from(item)).toList();
-    } catch (e) {
+    } catch (_) {
       return [];
     }
+  }
+
+  // Clear user-scoped notes on device without affecting cloud
+  Future<bool> clearUserNotes(String userId) async {
+    await clearPendingMutations(userId: userId);
+    return await _prefs.remove('$_keyNotesPrefix$userId');
+  }
+
+  // Offline pending mutations queue (Scoped strictly to authenticated user)
+  List<Map<String, dynamic>> getPendingMutations({String? userId}) {
+    if (userId == null || userId.isEmpty) return [];
+    final str = _prefs.getString('$_keyPendingMutationsPrefix$userId');
+    if (str == null || str.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(str) as List;
+      return decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> addPendingMutation(Map<String, dynamic> mutation, {String? userId}) async {
+    if (userId == null || userId.isEmpty) return false;
+    final list = getPendingMutations(userId: userId);
+    list.add(mutation);
+    return await _prefs.setString('$_keyPendingMutationsPrefix$userId', jsonEncode(list));
+  }
+
+  Future<bool> clearPendingMutations({String? userId}) async {
+    if (userId == null || userId.isEmpty) return false;
+    return await _prefs.remove('$_keyPendingMutationsPrefix$userId');
   }
 
   // Sync timestamp
@@ -55,12 +103,28 @@ class LocalStorageService {
     return _prefs.getString(_keyActivePeriod);
   }
 
-  // Guest Mode
-  Future<bool> setGuestMode(bool enabled) async {
-    return await _prefs.setBool(_keyGuestMode, enabled);
+  // Daily Reminder Settings
+  Future<bool> setDailyReminderEnabled(bool enabled) async {
+    return await _prefs.setBool(_keyDailyReminderEnabled, enabled);
   }
 
-  bool isGuestMode() {
-    return _prefs.getBool(_keyGuestMode) ?? false;
+  bool isDailyReminderEnabled() {
+    return _prefs.getBool(_keyDailyReminderEnabled) ?? false;
+  }
+
+  Future<bool> setDailyReminderTime(String time) async {
+    return await _prefs.setString(_keyDailyReminderTime, time);
+  }
+
+  String getDailyReminderTime() {
+    return _prefs.getString(_keyDailyReminderTime) ?? '09:00';
+  }
+
+  Future<bool> setDailyReminderMessage(String msg) async {
+    return await _prefs.setString(_keyDailyReminderMsg, msg);
+  }
+
+  String? getDailyReminderMessage() {
+    return _prefs.getString(_keyDailyReminderMsg);
   }
 }

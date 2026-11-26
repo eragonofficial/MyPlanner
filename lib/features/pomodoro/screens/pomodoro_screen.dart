@@ -365,10 +365,12 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
                           // Bottom Ambient Nature Sound Bar
                           AmbientSoundBar(
-                            activeSound: controller.activeSound,
-                            onSelectSound: controller.setAmbientSound,
+                            activeSounds: controller.activeSounds,
+                            onToggleSound: controller.toggleAmbientSound,
+                            onClearAllSounds: controller.clearAllSounds,
                             volume: controller.volume,
                             onVolumeChanged: controller.setVolume,
+                            isPaused: controller.isPaused,
                           ),
 
                           const SizedBox(height: 16),

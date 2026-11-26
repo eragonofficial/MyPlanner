@@ -48,39 +48,58 @@ enum PomodoroPhase {
 }
 
 enum AmbientSound {
-  none(
-    labelKey: LocaleKeys.soundNone,
-    icon: Icons.volume_off_rounded,
-    keyName: 'none',
-  ),
-  forest(
-    labelKey: LocaleKeys.soundForest,
-    icon: Icons.forest_rounded,
-    keyName: 'forest',
-  ),
-  rain(
-    labelKey: LocaleKeys.soundRain,
-    icon: Icons.water_drop_rounded,
-    keyName: 'rain',
-  ),
-  ocean(
-    labelKey: LocaleKeys.soundOcean,
+  dengiz(
+    labelKey: LocaleKeys.soundDengiz,
     icon: Icons.waves_rounded,
-    keyName: 'ocean',
+    keyName: 'dengiz',
+    assetPath: 'assets/audio/dengiz/dengiz_long.mp3',
   ),
-  wind(
-    labelKey: LocaleKeys.soundWind,
-    icon: Icons.air_rounded,
-    keyName: 'wind',
+  hasharot(
+    labelKey: LocaleKeys.soundHasharot,
+    icon: Icons.nights_stay_rounded,
+    keyName: 'hasharot',
+    assetPath: 'assets/audio/hasharot/hasharot_long.m4a',
+  ),
+  ormon(
+    labelKey: LocaleKeys.soundOrmon,
+    icon: Icons.forest_rounded,
+    keyName: 'ormon',
+    assetPath: 'assets/audio/ormon/ormon_long.m4a',
+  ),
+  qushlar(
+    labelKey: LocaleKeys.soundQushlar,
+    icon: Icons.flutter_dash,
+    keyName: 'qushlar',
+    assetPath: 'assets/audio/qushlar/qushlar_long.mp3',
+  ),
+  sharshara(
+    labelKey: LocaleKeys.soundSharshara,
+    icon: Icons.water_drop_rounded,
+    keyName: 'sharshara',
+    assetPath: 'assets/audio/sharshara/sharshara_long.m4a',
+  ),
+  toglar(
+    labelKey: LocaleKeys.soundToglar,
+    icon: Icons.landscape_rounded,
+    keyName: 'toglar',
+    assetPath: 'assets/audio/toglar/toglar_long.m4a',
+  ),
+  yomgir(
+    labelKey: LocaleKeys.soundYomgir,
+    icon: Icons.cloudy_snowing,
+    keyName: 'yomgir',
+    assetPath: 'assets/audio/yomgir/yomgir_long.m4a',
   );
 
   final String labelKey;
   final IconData icon;
   final String keyName;
+  final String assetPath;
 
   const AmbientSound({
     required this.labelKey,
     required this.icon,
     required this.keyName,
+    required this.assetPath,
   });
 }

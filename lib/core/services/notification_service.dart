@@ -18,6 +18,8 @@ class NotificationService {
   static const String _channelDescription =
       'Notifications for scheduled daily task reminders and deadlines';
 
+  static const int dailyReminderNotificationId = 999999;
+
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -47,7 +49,7 @@ class NotificationService {
       );
 
       // Create Android Notification Channel
-      final androidNotificationChannel = AndroidNotificationChannel(
+      const androidNotificationChannel = AndroidNotificationChannel(
         _channelId,
         _channelName,
         description: _channelDescription,
@@ -151,6 +153,89 @@ class NotificationService {
       debugPrint('Scheduled notification $id for $title at $scheduledDate');
     } catch (e) {
       debugPrint('Failed to schedule notification: $e');
+    }
+  }
+
+  /// Schedules a recurring daily reminder at a specific hour and minute
+  Future<void> scheduleDailyReminder({
+    required int hour,
+    required int minute,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) return;
+    if (!_isInitialized) {
+      await initialize();
+    }
+
+    try {
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+      );
+
+      // If already past today, schedule starting tomorrow
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final androidDetails = AndroidNotificationDetails(
+        _channelId,
+        _channelName,
+        channelDescription: _channelDescription,
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        styleInformation: BigTextStyleInformation(body),
+      );
+
+      final notificationDetails = NotificationDetails(android: androidDetails);
+
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          dailyReminderNotificationId,
+          title,
+          body,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (_) {
+        // Fallback for inexact alarms
+        await _notificationsPlugin.zonedSchedule(
+          dailyReminderNotificationId,
+          title,
+          body,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
+      debugPrint('Daily reminder scheduled recurring at $hour:$minute');
+    } catch (e) {
+      debugPrint('Failed to schedule daily reminder: $e');
+    }
+  }
+
+  /// Cancels the recurring daily reminder
+  Future<void> cancelDailyReminder() async {
+    if (kIsWeb) return;
+    try {
+      await _notificationsPlugin.cancel(dailyReminderNotificationId);
+      debugPrint('Cancelled daily recurring reminder');
+    } catch (e) {
+      debugPrint('Failed to cancel daily reminder: $e');
     }
   }
 

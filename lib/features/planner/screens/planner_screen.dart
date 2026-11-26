@@ -37,7 +37,7 @@ class PlannerScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AddEditNoteDialog(
         existingNote: existingNote,
-        initialPeriod: controller.activePeriod,
+        initialPeriod: controller.activePeriod ?? PeriodType.daily,
         initialDate: controller.selectedDate,
         onSave: ({
           required String title,
@@ -110,27 +110,109 @@ class PlannerScreen extends StatelessWidget {
   }
 
   List<NoteModel> _getSampleGuestNotes() {
-    final activeDate = controller.selectedDate;
     return [
       NoteModel(
-        id: 'sample_1',
+        id: 'sample-1',
         title: LocaleKeys.sampleNote1Title.tr(),
         description: LocaleKeys.sampleNote1Desc.tr(),
-        periodType: controller.activePeriod,
-        targetDate: activeDate,
+        periodType: PeriodType.daily,
+        targetDate: controller.selectedDate,
         priority: PriorityLevel.high,
         isCompleted: false,
+        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+        updatedAt: DateTime.now(),
       ),
       NoteModel(
-        id: 'sample_2',
+        id: 'sample-2',
         title: LocaleKeys.sampleNote2Title.tr(),
         description: LocaleKeys.sampleNote2Desc.tr(),
-        periodType: controller.activePeriod,
-        targetDate: activeDate.add(const Duration(hours: 2)),
+        periodType: PeriodType.daily,
+        targetDate: controller.selectedDate,
         priority: PriorityLevel.medium,
         isCompleted: true,
+        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+        updatedAt: DateTime.now(),
       ),
     ];
+  }
+
+  Color _getSyncBadgeBg(bool isGuest, SyncStatus status) {
+    if (isGuest) return AppColors.accentAmber.withValues(alpha: 0.15);
+    switch (status) {
+      case SyncStatus.synced:
+        return AppColors.primaryGreen.withValues(alpha: 0.15);
+      case SyncStatus.syncing:
+        return AppColors.primaryCyan.withValues(alpha: 0.15);
+      case SyncStatus.offline:
+        return AppColors.accentAmber.withValues(alpha: 0.15);
+      case SyncStatus.error:
+        return AppColors.accentRed.withValues(alpha: 0.15);
+    }
+  }
+
+  Color _getSyncBadgeBorder(bool isGuest, SyncStatus status) {
+    if (isGuest) return AppColors.accentAmber.withValues(alpha: 0.4);
+    switch (status) {
+      case SyncStatus.synced:
+        return AppColors.primaryGreen.withValues(alpha: 0.4);
+      case SyncStatus.syncing:
+        return AppColors.primaryCyan.withValues(alpha: 0.4);
+      case SyncStatus.offline:
+        return AppColors.accentAmber.withValues(alpha: 0.4);
+      case SyncStatus.error:
+        return AppColors.accentRed.withValues(alpha: 0.4);
+    }
+  }
+
+  Color _getSyncTextColor(bool isGuest, SyncStatus status) {
+    if (isGuest) return AppColors.accentAmber;
+    switch (status) {
+      case SyncStatus.synced:
+        return AppColors.primaryGreen;
+      case SyncStatus.syncing:
+        return AppColors.primaryCyan;
+      case SyncStatus.offline:
+        return AppColors.accentAmber;
+      case SyncStatus.error:
+        return AppColors.accentRed;
+    }
+  }
+
+  Widget _buildSyncIcon(bool isGuest, SyncStatus status) {
+    if (isGuest) {
+      return const Icon(Icons.person_outline_rounded, size: 14, color: AppColors.accentAmber);
+    }
+    switch (status) {
+      case SyncStatus.synced:
+        return const Icon(Icons.cloud_done_rounded, size: 14, color: AppColors.primaryGreen);
+      case SyncStatus.syncing:
+        return const SizedBox(
+          width: 12,
+          height: 12,
+          child: CircularProgressIndicator(
+            strokeWidth: 1.6,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryCyan),
+          ),
+        );
+      case SyncStatus.offline:
+        return const Icon(Icons.cloud_off_rounded, size: 14, color: AppColors.accentAmber);
+      case SyncStatus.error:
+        return const Icon(Icons.sync_problem_rounded, size: 14, color: AppColors.accentRed);
+    }
+  }
+
+  String _getSyncBadgeText(bool isGuest, SyncStatus status) {
+    if (isGuest) return LocaleKeys.guestModeBadge.tr();
+    switch (status) {
+      case SyncStatus.synced:
+        return LocaleKeys.syncStatusSynced.tr();
+      case SyncStatus.syncing:
+        return LocaleKeys.syncStatusSyncing.tr();
+      case SyncStatus.offline:
+        return LocaleKeys.syncStatusOffline.tr();
+      case SyncStatus.error:
+        return LocaleKeys.syncStatusError.tr();
+    }
   }
 
   @override
@@ -139,15 +221,20 @@ class PlannerScreen extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         final isGuest = !SupabaseService.isAuthenticated;
-        final actualNotes = controller.filteredNotes;
-        final isUsingSampleNotes = isGuest && controller.allNotes.isEmpty;
-        final displayNotes = isUsingSampleNotes ? _getSampleGuestNotes() : actualNotes;
+        final realNotes = controller.filteredNotes;
+        final isUsingSampleNotes = isGuest && controller.allNotes.isEmpty && realNotes.isEmpty;
+        final displayNotes = isUsingSampleNotes ? _getSampleGuestNotes() : realNotes;
 
         final total = isUsingSampleNotes ? displayNotes.length : controller.totalForActivePeriod;
         final completed = isUsingSampleNotes
             ? displayNotes.where((n) => n.isCompleted).length
             : controller.completedForActivePeriod;
         final progress = total > 0 ? (completed / total) : 0.0;
+
+        // Current period display title
+        final String headerTitle = controller.isAllPlansSelected
+            ? LocaleKeys.allPlans.tr()
+            : controller.activePeriod!.labelKey.tr();
 
         return Scaffold(
           backgroundColor: AppColors.darkBg,
@@ -157,7 +244,7 @@ class PlannerScreen extends StatelessWidget {
               onPressed: onOpenDrawer,
             ),
             title: Text(
-              LocaleKeys.plannerTitle.tr(),
+              LocaleKeys.plannerTitle.tr(), // "Mening Rejalarim" / "My Plans"
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             actions: [
@@ -173,39 +260,32 @@ class PlannerScreen extends StatelessWidget {
                   );
                 },
               ),
-              // Cloud Sync / Guest Status Pill
+              // Bulletproof Cloud Sync / Guest Status Indicator
               GestureDetector(
                 onTap: isGuest
                     ? () => AuthGuardModal.show(context, onAuthSuccess: controller.syncWithCloud)
-                    : null,
+                    : () => controller.syncWithCloud(),
                 child: Container(
                   margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: !isGuest
-                        ? AppColors.primaryGreen.withOpacity(0.15)
-                        : AppColors.accentAmber.withOpacity(0.15),
+                    color: _getSyncBadgeBg(isGuest, controller.syncStatus),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: !isGuest
-                          ? AppColors.primaryGreen.withOpacity(0.4)
-                          : AppColors.accentAmber.withOpacity(0.4),
+                      color: _getSyncBadgeBorder(isGuest, controller.syncStatus),
                     ),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        !isGuest ? Icons.cloud_done_rounded : Icons.person_outline_rounded,
-                        size: 14,
-                        color: !isGuest ? AppColors.primaryGreen : AppColors.accentAmber,
-                      ),
+                      _buildSyncIcon(isGuest, controller.syncStatus),
                       const SizedBox(width: 5),
                       Text(
-                        !isGuest ? LocaleKeys.navSyncOnline.tr() : LocaleKeys.guestModeBadge.tr(),
+                        _getSyncBadgeText(isGuest, controller.syncStatus),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: !isGuest ? AppColors.primaryGreen : AppColors.accentAmber,
+                          color: _getSyncTextColor(isGuest, controller.syncStatus),
                         ),
                       ),
                     ],
@@ -217,7 +297,7 @@ class PlannerScreen extends StatelessWidget {
           body: RefreshIndicator(
             color: AppColors.primaryCyan,
             backgroundColor: AppColors.darkBgSecondary,
-            onRefresh: controller.loadNotes,
+            onRefresh: controller.syncWithCloud,
             child: CustomScrollView(
               slivers: [
                 // Guest Banner (when unauthenticated)
@@ -231,12 +311,12 @@ class PlannerScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              AppColors.primaryCyan.withOpacity(0.12),
-                              AppColors.accentIndigo.withOpacity(0.12),
+                              AppColors.primaryCyan.withValues(alpha: 0.12),
+                              AppColors.accentIndigo.withValues(alpha: 0.12),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primaryCyan.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -270,7 +350,7 @@ class PlannerScreen extends StatelessWidget {
                     ),
                   ),
 
-                // Header with Progress summary
+                // Header with Progress summary & Active Period Filter Badge
                 SliverToBoxAdapter(
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -279,7 +359,7 @@ class PlannerScreen extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.darkBgSecondary,
-                          AppColors.darkBgCard.withOpacity(0.8),
+                          AppColors.darkBgCard.withValues(alpha: 0.8),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -293,38 +373,68 @@ class PlannerScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  LocaleKeys.plannerSubtitle.tr(),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          headerTitle,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primaryCyan,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          LocaleKeys.plannerSubtitle.tr(),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  LocaleKeys.completedCount.tr(args: [
-                                    '$completed',
-                                    '$total',
-                                  ]),
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    LocaleKeys.completedCount.tr(args: [
+                                      '$completed',
+                                      '$total',
+                                    ]),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             // Circular / Percent Badge
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.primaryGreen.withOpacity(0.15),
+                                color: AppColors.primaryGreen.withValues(alpha: 0.15),
                                 border: Border.all(
-                                  color: AppColors.primaryGreen.withOpacity(0.4),
+                                  color: AppColors.primaryGreen.withValues(alpha: 0.4),
                                 ),
                               ),
                               child: Text(
@@ -352,50 +462,68 @@ class PlannerScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Link to 365-Day Analytics
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => YearlyDashboardScreen(controller: controller),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryCyan.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: AppColors.primaryCyan.withOpacity(0.2),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.auto_graph_rounded,
-                                  size: 14,
-                                  color: AppColors.primaryCyan,
+
+                        // Prominent "+ Create New Plan" action button inside dashboard header
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showAddEditDialog(context),
+                                icon: const Icon(Icons.add_task_rounded, size: 18),
+                                label: Text(
+                                  LocaleKeys.createNewPlan.tr(),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  LocaleKeys.viewAnalytics.tr(),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primaryCyan,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryCyan,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                const Spacer(),
-                                const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 11,
-                                  color: AppColors.primaryCyan,
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 10),
+                            // Link to 365-Day Analytics
+                            InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => YearlyDashboardScreen(controller: controller),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryCyan.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AppColors.primaryCyan.withValues(alpha: 0.25),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.auto_graph_rounded,
+                                      size: 16,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 11,
+                                      color: AppColors.primaryCyan,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -406,7 +534,7 @@ class PlannerScreen extends StatelessWidget {
                 SliverToBoxAdapter(
                   child: PeriodTabsBar(
                     activePeriod: controller.activePeriod,
-                    onPeriodSelected: controller.setPeriodType,
+                    onPeriodSelected: (period) => controller.setPeriodType(period),
                     getCount: (type) {
                       if (isUsingSampleNotes) {
                         return type == controller.activePeriod ? displayNotes.length : 0;
@@ -416,10 +544,11 @@ class PlannerScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Dynamic Real Calendar Navigator Bar (Daily strip, Weekly, Monthly, Yearly)
-                SliverToBoxAdapter(
-                  child: CalendarNavigatorBar(controller: controller),
-                ),
+                // Dynamic Real Calendar Navigator Bar (when viewing a specific period)
+                if (controller.activePeriod != null)
+                  SliverToBoxAdapter(
+                    child: CalendarNavigatorBar(controller: controller),
+                  ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
@@ -519,7 +648,7 @@ class PlannerScreen extends StatelessWidget {
             elevation: 4,
             icon: const Icon(Icons.add_rounded, size: 22),
             label: Text(
-              LocaleKeys.addTaskBtn.tr(),
+              LocaleKeys.createNewPlan.tr(),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),

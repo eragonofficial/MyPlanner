@@ -10,6 +10,8 @@ class LocaleKeys {
   static const String navAppVersion = 'nav_app_version';
 
   // Planner
+  static const String allPlans = 'all_plans';
+  static const String createNewPlan = 'create_new_plan';
   static const String periodDaily = 'period_daily';
   static const String periodWeekly = 'period_weekly';
   static const String periodMonthly = 'period_monthly';
@@ -62,6 +64,13 @@ class LocaleKeys {
   static const String actionResume = 'action_resume';
   static const String actionReset = 'action_reset';
   static const String ambientTitle = 'ambient_title';
+  static const String soundDengiz = 'sound_dengiz';
+  static const String soundHasharot = 'sound_hasharot';
+  static const String soundOrmon = 'sound_ormon';
+  static const String soundQushlar = 'sound_qushlar';
+  static const String soundSharshara = 'sound_sharshara';
+  static const String soundToglar = 'sound_toglar';
+  static const String soundYomgir = 'sound_yomgir';
   static const String soundForest = 'sound_forest';
   static const String soundRain = 'sound_rain';
   static const String soundOcean = 'sound_ocean';
@@ -108,7 +117,7 @@ class LocaleKeys {
   static const String reminderSet = 'reminder_set';
   static const String noReminder = 'no_reminder';
 
-  // Yearly Dashboard & 365-Day Analytics
+  // Yearly Dashboard & Analytics
   static const String dashboardTitle = 'dashboard_title';
   static const String dashboardSubtitle = 'dashboard_subtitle';
   static const String selectYear = 'select_year';
@@ -166,4 +175,36 @@ class LocaleKeys {
   static const String regularYear = 'regular_year';
   static const String daysCount = 'days_count';
   static const String daysRemainingInYear = 'days_remaining_in_year';
+  // Daily Reminder Settings
+  static const String dailyReminderTitle = 'daily_reminder_title';
+  static const String dailyReminderSubtitle = 'daily_reminder_subtitle';
+  static const String dailyReminderTime = 'daily_reminder_time';
+  static const String selectTime = 'select_time';
+  static const String reminderEnabledFor = 'reminder_enabled_for';
+  static const String dailyReminderDefaultMsg = 'daily_reminder_default_msg';
+  static const String dailyReminderWebNotice = 'daily_reminder_web_notice';
+  static const String customMessage = 'custom_message';
+  static const String customMessageHint = 'custom_message_hint';
+
+  // Cloud Sync Architecture
+  static const String syncStatusSynced = 'sync_status_synced';
+  static const String syncStatusSyncing = 'sync_status_syncing';
+  static const String syncStatusOffline = 'sync_status_offline';
+  static const String syncStatusError = 'sync_status_error';
+  static const String syncNow = 'sync_now';
+  static const String guestMergedNotice = 'guest_merged_notice';
+
+  // Modern Web Landing Page
+  static const String landingHeroBadge = 'landing_hero_badge';
+  static const String landingHeroTitle = 'landing_hero_title';
+  static const String landingHeroSubtitle = 'landing_hero_subtitle';
+  static const String landingGetStarted = 'landing_get_started';
+  static const String landingFeaturePlanningTitle = 'landing_feature_planning_title';
+  static const String landingFeaturePlanningDesc = 'landing_feature_planning_desc';
+  static const String landingFeatureDashboardTitle = 'landing_feature_dashboard_title';
+  static const String landingFeatureDashboardDesc = 'landing_feature_dashboard_desc';
+  static const String landingFeaturePomodoroTitle = 'landing_feature_pomodoro_title';
+  static const String landingFeaturePomodoroDesc = 'landing_feature_pomodoro_desc';
+  static const String landingFeatureSyncTitle = 'landing_feature_sync_title';
+  static const String landingFeatureSyncDesc = 'landing_feature_sync_desc';
 }

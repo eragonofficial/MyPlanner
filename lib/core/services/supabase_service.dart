@@ -149,7 +149,61 @@ class SupabaseService {
     await supabase.auth.signOut();
   }
 
-  // Fetch all notes from Supabase (with user_id filter if authenticated)
+  // Update user profile/metadata (e.g. daily reminder settings)
+  static Future<void> syncUserReminderPreferences({
+    required bool enabled,
+    required String time,
+    String? message,
+  }) async {
+    final supabase = client;
+    if (supabase == null || !isAuthenticated) return;
+    try {
+      await supabase.auth.updateUser(
+        UserAttributes(
+          data: {
+            'daily_reminder_enabled': enabled,
+            'daily_reminder_time': time,
+            if (message != null && message.isNotEmpty) 'daily_reminder_message': message,
+          },
+        ),
+      );
+    } catch (e) {
+      debugPrint('Supabase reminder preferences sync error: $e');
+    }
+  }
+
+  // Realtime subscription
+  static RealtimeChannel? _realtimeChannel;
+
+  static void subscribeToNotes(VoidCallback onRemoteChange) {
+    if (!isReady || client == null) return;
+    try {
+      _realtimeChannel?.unsubscribe();
+      _realtimeChannel = client!
+          .channel('public:${SupabaseConstants.tableNameNotes}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: SupabaseConstants.tableNameNotes,
+            callback: (payload) {
+              debugPrint('Supabase realtime change event: ${payload.eventType}');
+              onRemoteChange();
+            },
+          )
+          .subscribe();
+    } catch (e) {
+      debugPrint('Supabase realtime subscription notice: $e');
+    }
+  }
+
+  static void unsubscribeRealtime() {
+    try {
+      _realtimeChannel?.unsubscribe();
+      _realtimeChannel = null;
+    } catch (_) {}
+  }
+
+  // Fetch all notes from Supabase (Single Source of Truth filtered by user_id)
   static Future<List<Map<String, dynamic>>?> fetchNotes() async {
     final supabase = client;
     if (supabase == null) return null;
@@ -158,6 +212,7 @@ class SupabaseService {
       var query = supabase.from(SupabaseConstants.tableNameNotes).select();
 
       if (isAuthenticated && currentUserId != null) {
+        // Query strictly for authenticated user or legacy unassigned notes
         query = query.or('user_id.eq.$currentUserId,user_id.is.null');
       }
 
@@ -179,8 +234,8 @@ class SupabaseService {
     }
   }
 
-  // Insert note into Supabase
-  static Future<bool> insertNote(Map<String, dynamic> noteData) async {
+  // Safe Upsert Note: inserts if new, updates if exists (prevents primary key duplication)
+  static Future<bool> upsertNote(Map<String, dynamic> noteData) async {
     final supabase = client;
     if (supabase == null) return false;
 
@@ -190,22 +245,30 @@ class SupabaseService {
         payload[SupabaseConstants.colUserId] = currentUserId;
       }
 
-      await supabase.from(SupabaseConstants.tableNameNotes).insert(payload);
+      await supabase
+          .from(SupabaseConstants.tableNameNotes)
+          .upsert(payload, onConflict: SupabaseConstants.colId);
       return true;
     } catch (e) {
-      debugPrint('Supabase insert error: $e');
-      // If user_id or reminder_time column doesn't exist, try inserting without them
+      debugPrint('Supabase upsert error: $e');
       try {
         final fallbackPayload = Map<String, dynamic>.from(noteData)
           ..remove(SupabaseConstants.colUserId)
           ..remove(SupabaseConstants.colReminderTime);
-        await supabase.from(SupabaseConstants.tableNameNotes).insert(fallbackPayload);
+        await supabase
+            .from(SupabaseConstants.tableNameNotes)
+            .upsert(fallbackPayload, onConflict: SupabaseConstants.colId);
         return true;
       } catch (err) {
-        debugPrint('Supabase fallback insert error: $err');
+        debugPrint('Supabase fallback upsert error: $err');
         return false;
       }
     }
+  }
+
+  // Insert note into Supabase (calls upsert for zero data loss)
+  static Future<bool> insertNote(Map<String, dynamic> noteData) async {
+    return await upsertNote(noteData);
   }
 
   // Update note in Supabase

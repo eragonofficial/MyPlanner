@@ -28,7 +28,7 @@ class AuthGuardModal extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           decoration: BoxDecoration(
-            color: AppColors.darkBgSecondary.withOpacity(0.95),
+            color: AppColors.darkBgSecondary.withValues(alpha: 0.95),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             border: Border.all(color: AppColors.glassBorder, width: 0.8),
           ),
@@ -41,7 +41,7 @@ class AuthGuardModal extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted.withOpacity(0.5),
+                  color: AppColors.textMuted.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -57,7 +57,7 @@ class AuthGuardModal extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryCyan.withOpacity(0.35),
+                      color: AppColors.primaryCyan.withValues(alpha: 0.35),
                       blurRadius: 18,
                       spreadRadius: 2,
                     ),

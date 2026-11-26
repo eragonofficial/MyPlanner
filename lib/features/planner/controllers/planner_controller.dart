@@ -4,26 +4,47 @@ import '../../../core/services/supabase_service.dart';
 import '../data/planner_repository.dart';
 import '../models/note_model.dart';
 
+enum SyncStatus {
+  synced,
+  syncing,
+  offline,
+  error,
+}
+
 class PlannerController extends ChangeNotifier {
   final PlannerRepository _repository;
   final NotificationService _notificationService = NotificationService();
 
-  PeriodType _activePeriod = PeriodType.daily;
+  PeriodType? _activePeriod = PeriodType.daily;
   List<NoteModel> _notes = [];
   bool _isLoading = false;
+
+  SyncStatus _syncStatus = SyncStatus.offline;
+  DateTime? _lastSyncTime;
 
   // Real Gregorian Calendar state, dynamically initialized to DateTime.now()
   late DateTime _selectedDate;
 
   PlannerController(this._repository) {
     _initCalendarDate();
-    loadNotes();
+    _loadInitialNotes();
+    syncWithCloud();
   }
 
   void _initCalendarDate() {
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
   }
+
+  void _loadInitialNotes() {
+    _notes = _repository.loadInitialNotes();
+    _rescheduleActiveReminders();
+  }
+
+  // Sync Getters
+  SyncStatus get syncStatus => _syncStatus;
+  DateTime? get lastSyncTime => _lastSyncTime;
+  bool get isCloudSyncAvailable => _repository.isCloudSyncAvailable;
 
   // Calendar Getters
   DateTime get selectedDate => _selectedDate;
@@ -116,18 +137,19 @@ class PlannerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  PeriodType get activePeriod => _activePeriod;
+  PeriodType? get activePeriod => _activePeriod;
+  bool get isAllPlansSelected => _activePeriod == null;
   List<NoteModel> get allNotes => _notes;
   bool get isLoading => _isLoading;
-  bool get isCloudSyncAvailable => _repository.isCloudSyncAvailable;
 
-  // Filter notes strictly aligned to the active Gregorian period
+  // Filter notes strictly aligned to the active Gregorian period (or all plans if null)
   List<NoteModel> get filteredNotes {
     final list = _notes.where((note) {
+      if (_activePeriod == null) return true;
       if (note.periodType != _activePeriod) return false;
 
       final target = note.targetDate;
-      switch (_activePeriod) {
+      switch (_activePeriod!) {
         case PeriodType.daily:
           return target.year == _selectedDate.year &&
               target.month == _selectedDate.month &&
@@ -183,35 +205,76 @@ class PlannerController extends ChangeNotifier {
     }).length;
   }
 
-  Future<void> loadNotes() async {
-    _isLoading = true;
+  void setPeriodType(PeriodType? period) {
+    if (_activePeriod == period) return;
+    _activePeriod = period;
+    notifyListeners();
+  }
+
+  /// Core Sync Pull: Triggered on startup, login, app resume, or manual tap
+  Future<void> syncWithCloud({bool showLoading = false}) async {
+    if (showLoading) {
+      _isLoading = true;
+    }
+    _syncStatus = SyncStatus.syncing;
     notifyListeners();
 
     try {
-      _notes = await _repository.getNotes();
-      // Schedule any active future reminders
-      for (final n in _notes) {
-        if (!n.isCompleted && n.reminderTime != null && n.reminderTime!.isAfter(DateTime.now())) {
-          _notificationService.scheduleTaskReminder(
-            taskId: n.id,
-            title: n.title,
-            description: n.description,
-            reminderTime: n.reminderTime!,
-          );
-        }
+      final result = await _repository.syncCloudAndLocal();
+      _notes = result.notes;
+
+      switch (result.outcome) {
+        case SyncOutcome.synced:
+          _syncStatus = SyncStatus.synced;
+          _lastSyncTime = DateTime.now();
+          break;
+        case SyncOutcome.offline:
+          _syncStatus = SupabaseService.isAuthenticated
+              ? SyncStatus.synced
+              : SyncStatus.offline;
+          break;
+        case SyncOutcome.error:
+          _syncStatus = SyncStatus.error;
+          break;
       }
+
+      _rescheduleActiveReminders();
     } catch (e) {
-      debugPrint('Error loading notes: $e');
+      debugPrint('Sync failed with error: $e');
+      _syncStatus = SyncStatus.error;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  void setPeriodType(PeriodType period) {
-    if (_activePeriod == period) return;
-    _activePeriod = period;
+  /// Called after user logs in (or token refreshed) to execute Guest-to-Account merge
+  Future<void> handleAuthChanged() async {
+    await syncWithCloud(showLoading: true);
+  }
+
+  /// Called after user logs out to clear local user cache without touching Supabase
+  Future<void> handleSignOut() async {
+    final userId = SupabaseService.currentUserId;
+    if (userId != null) {
+      await _repository.clearUserLocalCacheOnSignOut(userId);
+    }
+    _notes = _repository.loadInitialNotes();
+    _syncStatus = SyncStatus.offline;
     notifyListeners();
+  }
+
+  void _rescheduleActiveReminders() {
+    for (final n in _notes) {
+      if (!n.isCompleted && n.reminderTime != null && n.reminderTime!.isAfter(DateTime.now())) {
+        _notificationService.scheduleTaskReminder(
+          taskId: n.id,
+          title: n.title,
+          description: n.description,
+          reminderTime: n.reminderTime!,
+        );
+      }
+    }
   }
 
   Future<void> addNote({
@@ -222,6 +285,9 @@ class PlannerController extends ChangeNotifier {
     PeriodType? periodType,
     DateTime? reminderTime,
   }) async {
+    // Unauthenticated users cannot add/save plans
+    if (!SupabaseService.isAuthenticated) return;
+
     final effectiveTargetDate = targetDate ?? _selectedDate;
 
     final newNote = NoteModel(
@@ -229,14 +295,16 @@ class PlannerController extends ChangeNotifier {
       userId: SupabaseService.currentUserId,
       title: title,
       description: description,
-      periodType: periodType ?? _activePeriod,
+      periodType: periodType ?? _activePeriod ?? PeriodType.daily,
       targetDate: effectiveTargetDate,
       priority: priority,
       isCompleted: false,
       reminderTime: reminderTime,
     );
 
+    // Optimistic UI update
     _notes.insert(0, newNote);
+    _syncStatus = SupabaseService.isAuthenticated ? SyncStatus.syncing : SyncStatus.offline;
     notifyListeners();
 
     if (reminderTime != null && reminderTime.isAfter(DateTime.now())) {
@@ -249,13 +317,21 @@ class PlannerController extends ChangeNotifier {
     }
 
     await _repository.addNote(newNote, _notes);
+    if (SupabaseService.isAuthenticated) {
+      _syncStatus = SyncStatus.synced;
+      _lastSyncTime = DateTime.now();
+      notifyListeners();
+    }
   }
 
   Future<void> updateNote(NoteModel updated) async {
+    if (!SupabaseService.isAuthenticated) return;
     final index = _notes.indexWhere((n) => n.id == updated.id);
     if (index == -1) return;
 
+    // Optimistic UI update
     _notes[index] = updated;
+    _syncStatus = SupabaseService.isAuthenticated ? SyncStatus.syncing : SyncStatus.offline;
     notifyListeners();
 
     if (updated.isCompleted || updated.reminderTime == null) {
@@ -270,13 +346,20 @@ class PlannerController extends ChangeNotifier {
     }
 
     await _repository.updateNote(updated, _notes);
+    if (SupabaseService.isAuthenticated) {
+      _syncStatus = SyncStatus.synced;
+      _lastSyncTime = DateTime.now();
+      notifyListeners();
+    }
   }
 
   Future<void> toggleComplete(NoteModel note) async {
+    if (!SupabaseService.isAuthenticated) return;
     final updated = note.copyWith(isCompleted: !note.isCompleted);
     final index = _notes.indexWhere((n) => n.id == note.id);
     if (index != -1) {
       _notes[index] = updated;
+      _syncStatus = SupabaseService.isAuthenticated ? SyncStatus.syncing : SyncStatus.offline;
       notifyListeners();
     }
 
@@ -292,18 +375,25 @@ class PlannerController extends ChangeNotifier {
     }
 
     await _repository.toggleComplete(note, _notes);
+    if (SupabaseService.isAuthenticated) {
+      _syncStatus = SyncStatus.synced;
+      _lastSyncTime = DateTime.now();
+      notifyListeners();
+    }
   }
 
   Future<void> deleteNote(String noteId) async {
+    if (!SupabaseService.isAuthenticated) return;
     _notes.removeWhere((n) => n.id == noteId);
+    _syncStatus = SupabaseService.isAuthenticated ? SyncStatus.syncing : SyncStatus.offline;
     notifyListeners();
 
     _notificationService.cancelTaskReminder(noteId);
     await _repository.deleteNote(noteId, _notes);
-  }
-
-  Future<void> syncWithCloud() async {
-    await _repository.syncLocalNotesToCloud();
-    await loadNotes();
+    if (SupabaseService.isAuthenticated) {
+      _syncStatus = SyncStatus.synced;
+      _lastSyncTime = DateTime.now();
+      notifyListeners();
+    }
   }
 }

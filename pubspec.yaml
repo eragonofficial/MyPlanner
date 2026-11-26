@@ -37,6 +37,13 @@ flutter:
   assets:
     - assets/translations/
     - assets/audio/
+    - assets/audio/dengiz/
+    - assets/audio/hasharot/
+    - assets/audio/ormon/
+    - assets/audio/qushlar/
+    - assets/audio/sharshara/
+    - assets/audio/toglar/
+    - assets/audio/yomgir/
     - assets/images/
     - assets/icon/
 

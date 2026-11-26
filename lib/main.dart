@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -10,6 +11,8 @@ import 'core/services/local_storage_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/screens/auth_screen.dart';
+import 'features/landing/landing_page.dart';
 import 'features/planner/controllers/planner_controller.dart';
 import 'features/planner/data/planner_repository.dart';
 import 'features/planner/screens/planner_screen.dart';
@@ -53,6 +56,7 @@ void main() async {
       child: MyPlannerApp(
         plannerController: plannerController,
         pomodoroController: pomodoroController,
+        localStorage: localStorage,
       ),
     ),
   );
@@ -61,11 +65,13 @@ void main() async {
 class MyPlannerApp extends StatelessWidget {
   final PlannerController plannerController;
   final PomodoroController pomodoroController;
+  final LocalStorageService localStorage;
 
   const MyPlannerApp({
     super.key,
     required this.plannerController,
     required this.pomodoroController,
+    required this.localStorage,
   });
 
   @override
@@ -80,6 +86,7 @@ class MyPlannerApp extends StatelessWidget {
       home: MainShell(
         plannerController: plannerController,
         pomodoroController: pomodoroController,
+        localStorage: localStorage,
       ),
     );
   }
@@ -88,34 +95,74 @@ class MyPlannerApp extends StatelessWidget {
 class MainShell extends StatefulWidget {
   final PlannerController plannerController;
   final PomodoroController pomodoroController;
+  final LocalStorageService localStorage;
 
   const MainShell({
     super.key,
     required this.plannerController,
     required this.pomodoroController,
+    required this.localStorage,
   });
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   MainModule _currentModule = MainModule.planner;
 
   @override
   void initState() {
     super.initState();
-    SupabaseService.authStateChanges?.listen((data) {
+    WidgetsBinding.instance.addObserver(this);
+
+    // Cross-Platform Realtime Subscription (Web + Android)
+    SupabaseService.subscribeToNotes(() {
       if (mounted) {
         widget.plannerController.syncWithCloud();
+      }
+    });
+
+    // Auth State Changes (Safe Guest-to-Account merge on login)
+    SupabaseService.authStateChanges?.listen((data) {
+      if (mounted) {
+        widget.plannerController.handleAuthChanged();
         setState(() {});
       }
     });
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    SupabaseService.unsubscribeRealtime();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Automatic background sync pull on app resume
+    if (state == AppLifecycleState.resumed) {
+      widget.plannerController.syncWithCloud();
+    }
+  }
+
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
+  }
+
+  void _openAuthScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AuthScreen(
+          onAuthSuccess: () {
+            widget.plannerController.handleAuthChanged();
+            if (mounted) setState(() {});
+          },
+        ),
+      ),
+    );
   }
 
   void _switchModule(MainModule module) {
@@ -126,6 +173,13 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Website Behavior (kIsWeb): Unauthenticated users see the modern Landing Page
+    if (kIsWeb && !SupabaseService.isAuthenticated) {
+      return LandingPage(
+        onSignInPressed: () => _openAuthScreen(context),
+      );
+    }
+
     return AnimatedBuilder(
       animation: Listenable.merge([widget.plannerController, widget.pomodoroController]),
       builder: (context, _) {
@@ -135,9 +189,18 @@ class _MainShellState extends State<MainShell> {
           drawer: AppDrawer(
             currentModule: _currentModule,
             onSelectModule: _switchModule,
+            activePeriod: widget.plannerController.activePeriod,
+            onSelectPeriod: (period) {
+              widget.plannerController.setPeriodType(period);
+            },
             totalTasks: widget.plannerController.allNotes.length,
+            getPeriodCount: (type) => widget.plannerController.getCountForPeriod(type),
             isPomodoroRunning: widget.pomodoroController.isRunning,
             isCloudOnline: widget.plannerController.isCloudSyncAvailable,
+            syncStatus: widget.plannerController.syncStatus,
+            onSyncNow: () => widget.plannerController.syncWithCloud(showLoading: true),
+            onSignOut: () => widget.plannerController.handleSignOut(),
+            localStorage: widget.localStorage,
             onAuthChanged: () {
               widget.plannerController.syncWithCloud();
               setState(() {});

@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
-import '../../../core/services/local_storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -155,14 +154,6 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _continueAsGuest() async {
-    final localStorage = await LocalStorageService.create();
-    await localStorage.setGuestMode(true);
-    if (!mounted) return;
-    widget.onAuthSuccess?.call();
-    Navigator.of(context).pop(false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -294,38 +285,6 @@ class _AuthScreenState extends State<AuthScreen> {
               // Email 6-digit OTP Section
               _otpSent ? _buildOtpVerificationSection() : _buildEmailInputSection(),
 
-              const SizedBox(height: 24),
-
-              // Divider
-              const Divider(color: AppColors.glassBorder, height: 1),
-              const SizedBox(height: 20),
-
-              // Guest Mode Option ("Continue as Guest")
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _continueAsGuest,
-                icon: const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 20),
-                label: Text(
-                  LocaleKeys.continueAsGuest.tr(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: const BorderSide(color: AppColors.glassBorder),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                LocaleKeys.guestModeNotice.tr(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.3),
-              ),
               const SizedBox(height: 16),
             ],
           ),

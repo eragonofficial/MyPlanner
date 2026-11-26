@@ -70,8 +70,8 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
 
   Color _getHeatmapColor(int count) {
     if (count == 0) return AppColors.glassSurface;
-    if (count == 1) return AppColors.primaryGreen.withOpacity(0.35);
-    if (count == 2) return AppColors.primaryGreen.withOpacity(0.65);
+    if (count == 1) return AppColors.primaryGreen.withValues(alpha: 0.35);
+    if (count == 2) return AppColors.primaryGreen.withValues(alpha: 0.65);
     return AppColors.primaryGreen;
   }
 
@@ -181,10 +181,10 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isLeap ? AppColors.accentAmber.withOpacity(0.2) : AppColors.glassSurface,
+                      color: isLeap ? AppColors.accentAmber.withValues(alpha: 0.2) : AppColors.glassSurface,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: isLeap ? AppColors.accentAmber.withOpacity(0.5) : AppColors.glassBorder,
+                        color: isLeap ? AppColors.accentAmber.withValues(alpha: 0.5) : AppColors.glassBorder,
                       ),
                     ),
                     child: Text(
@@ -257,7 +257,7 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
         gradient: LinearGradient(
           colors: [
             AppColors.darkBgSecondary,
-            AppColors.darkBgCard.withOpacity(0.9),
+            AppColors.darkBgCard.withValues(alpha: 0.9),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -283,9 +283,9 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.accentAmber.withOpacity(0.18),
+                  color: AppColors.accentAmber.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentAmber.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.accentAmber.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
@@ -626,11 +626,11 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
                                         ? Border.all(color: Colors.white, width: 1.5)
                                         : (isToday
                                             ? Border.all(color: AppColors.primaryCyan, width: 1.2)
-                                            : Border.all(color: AppColors.glassBorder.withOpacity(0.25), width: 0.5)),
+                                            : Border.all(color: AppColors.glassBorder.withValues(alpha: 0.25), width: 0.5)),
                                     boxShadow: isToday
                                         ? [
                                             BoxShadow(
-                                              color: AppColors.primaryCyan.withOpacity(0.4),
+                                              color: AppColors.primaryCyan.withValues(alpha: 0.4),
                                               blurRadius: 4,
                                             ),
                                           ]

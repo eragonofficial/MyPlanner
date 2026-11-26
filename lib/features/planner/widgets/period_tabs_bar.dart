@@ -4,7 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../models/note_model.dart';
 
 class PeriodTabsBar extends StatelessWidget {
-  final PeriodType activePeriod;
+  final PeriodType? activePeriod;
   final Function(PeriodType) onPeriodSelected;
   final int Function(PeriodType) getCount;
 
