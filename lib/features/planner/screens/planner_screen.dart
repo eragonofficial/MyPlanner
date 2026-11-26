@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../../shared/widgets/auth_guard_modal.dart';
 import '../../../shared/widgets/animated_aurora_background.dart';
 import '../../../shared/widgets/bouncy_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
+import '../../../shared/widgets/language_dropdown_button.dart';
 import '../controllers/planner_controller.dart';
 import '../models/note_model.dart';
 import '../widgets/period_tabs_bar.dart';
@@ -411,9 +413,20 @@ class PlannerScreen extends StatelessWidget {
             ),
             title: Text(
               LocaleKeys.plannerTitle.tr(), // "Mening Rejalarim" / "My Plans"
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+              overflow: TextOverflow.ellipsis,
             ),
             actions: [
+              // Language Selector Dropdown on Workspace Top Bar (Web & Wide Viewports)
+              if (kIsWeb || MediaQuery.sizeOf(context).width >= 560)
+                const Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Center(
+                    child: LanguageDropdownButton(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    ),
+                  ),
+                ),
               // Analytics Dashboard Shortcut Button
               IconButton(
                 icon: const Icon(Icons.insights_rounded, color: AppColors.primaryCyan, size: 22),

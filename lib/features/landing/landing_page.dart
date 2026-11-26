@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/localization/language_manager.dart';
 import '../../../core/localization/locale_keys.dart';
 import 'widgets/aurora_particle_background.dart';
 import 'widgets/interactive_glass_card.dart';
 import 'widgets/interactive_try_live_widget.dart';
 import 'widgets/shimmer_cta_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
+import '../../../shared/widgets/language_dropdown_button.dart';
 
 class LandingPage extends StatefulWidget {
   final VoidCallback onSignInPressed;
@@ -162,8 +162,8 @@ class _LandingPageState extends State<LandingPage>
 
           const Spacer(),
 
-          // 5-Language Switcher Pills
-          _buildLanguageBar(context),
+          // Language Selector Dropdown Button
+          const LanguageDropdownButton(),
 
           const SizedBox(width: 14),
 
@@ -186,76 +186,6 @@ class _LandingPageState extends State<LandingPage>
         ],
       ),
     );
-  }
-
-  Widget _buildLanguageBar(BuildContext context) {
-    final currentLocale = context.locale;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: LanguageManager.languages.map((item) {
-          final isSelected = currentLocale.languageCode == item.locale.languageCode &&
-              currentLocale.scriptCode == item.locale.scriptCode;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: InkWell(
-              onTap: () {
-                context.setLocale(item.locale);
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primaryCyan.withValues(alpha: 0.2)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected ? AppColors.primaryCyan : Colors.transparent,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(item.flag, style: const TextStyle(fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getLanguageShortCode(item.code),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? AppColors.primaryCyan : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  String _getLanguageShortCode(String code) {
-    switch (code) {
-      case 'uz-Latn':
-        return 'UZ-L';
-      case 'uz-Cyrl':
-        return 'ЎЗ-К';
-      case 'ru':
-        return 'RU';
-      case 'en':
-        return 'EN';
-      case 'ko':
-        return 'KO';
-      default:
-        return code.toUpperCase();
-    }
   }
 
   Widget _buildHeroSection(BuildContext context, bool isDesktop) {

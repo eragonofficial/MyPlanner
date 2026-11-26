@@ -82,6 +82,7 @@ class LocaleKeys {
   static const String allSessionsDone = 'all_sessions_done';
 
   // Languages
+  static const String languages = 'languages';
   static const String langUzLatn = 'lang_uz_latn';
   static const String langUzCyrl = 'lang_uz_cyrl';
   static const String langRu = 'lang_ru';

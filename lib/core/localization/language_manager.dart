@@ -27,6 +27,7 @@ class LanguageManager {
       code: 'uz-Latn',
       flag: '🇺🇿',
       shortName: 'UZ (Latn)',
+      nativeName: "O'zbekcha (Lotin)",
     ),
     const LanguageItem(
       locale: uzCyrl,
@@ -34,6 +35,7 @@ class LanguageManager {
       code: 'uz-Cyrl',
       flag: '🇺🇿',
       shortName: 'ЎЗ (Кир)',
+      nativeName: 'Ўзбекча (Кирилл)',
     ),
     const LanguageItem(
       locale: ru,
@@ -41,6 +43,7 @@ class LanguageManager {
       code: 'ru',
       flag: '🇷🇺',
       shortName: 'RU',
+      nativeName: 'Русский',
     ),
     const LanguageItem(
       locale: en,
@@ -48,6 +51,7 @@ class LanguageManager {
       code: 'en',
       flag: '🇺🇸',
       shortName: 'EN',
+      nativeName: 'English',
     ),
     const LanguageItem(
       locale: ko,
@@ -55,6 +59,7 @@ class LanguageManager {
       code: 'ko',
       flag: '🇰🇷',
       shortName: 'KO',
+      nativeName: '한국어',
     ),
   ];
 
@@ -74,6 +79,7 @@ class LanguageItem {
   final String code;
   final String flag;
   final String shortName;
+  final String nativeName;
 
   const LanguageItem({
     required this.locale,
@@ -81,5 +87,6 @@ class LanguageItem {
     required this.code,
     required this.flag,
     required this.shortName,
+    required this.nativeName,
   });
 }

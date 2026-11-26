@@ -8,7 +8,7 @@ import '../../features/planner/models/note_model.dart';
 import '../../features/planner/controllers/planner_controller.dart';
 import '../../features/planner/widgets/daily_reminder_settings_sheet.dart';
 import '../../../core/services/local_storage_service.dart';
-import 'language_selector.dart';
+import 'language_dropdown_button.dart';
 import 'bouncy_button.dart';
 import 'pulsing_badge.dart';
 
@@ -328,7 +328,10 @@ class AppDrawer extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const DrawerLanguageList(),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          child: LanguageDropdownButton(isExpanded: true),
+                        ),
                       ],
                     ),
                   ),

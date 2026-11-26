@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
-import '../../../shared/widgets/language_selector.dart';
+import '../../../shared/widgets/language_dropdown_button.dart';
 import '../../../shared/widgets/animated_aurora_background.dart';
 import '../../../shared/widgets/bouncy_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
@@ -152,8 +152,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             ],
                           ),
                         ),
-                        // Quick Language Selector Pills on Pomodoro Screen
-                        const QuickLanguagePills(),
+                        // Language Selector Dropdown on Pomodoro Screen Top Bar
+                        const LanguageDropdownButton(),
                       ],
                     ),
                   ),
