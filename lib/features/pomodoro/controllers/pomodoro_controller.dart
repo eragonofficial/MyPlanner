@@ -19,14 +19,23 @@ class PomodoroController extends ChangeNotifier {
   int _targetSessions = 4;
   int _completedSessions = 0;
 
-  final Set<AmbientSound> _activeSounds = {};
-
   // Callbacks
   Function(String title, String message)? onNotification;
   Function(String soundKey)? onAssetMissingNotice;
 
   PomodoroController(this._audioPlayer) {
     _resetToCurrentMode();
+    _audioPlayer.addListener(_onAudioServiceUpdate);
+    preloadSounds();
+  }
+
+  void _onAudioServiceUpdate() {
+    notifyListeners();
+  }
+
+  // Pre-load all 7 audio tracks asynchronously
+  Future<void> preloadSounds() async {
+    await _audioPlayer.preloadAll(AmbientSound.values);
   }
 
   // Getters
@@ -38,10 +47,19 @@ class PomodoroController extends ChangeNotifier {
   bool get isPaused => _isPaused;
   int get targetSessions => _targetSessions;
   int get completedSessions => _completedSessions;
-  Set<AmbientSound> get activeSounds => Set.unmodifiable(_activeSounds);
-  double get volume => _audioPlayer.volume;
 
-  bool isSoundActive(AmbientSound sound) => _activeSounds.contains(sound);
+  Set<AmbientSound> get activeSounds => AmbientSound.values
+      .where((sound) => _audioPlayer.isSoundActive(sound.keyName))
+      .toSet();
+
+  double get volume => _audioPlayer.volume;
+  bool get isPreloaded => _audioPlayer.isPreloaded;
+
+  bool isSoundActive(AmbientSound sound) =>
+      _audioPlayer.isSoundActive(sound.keyName);
+
+  bool isSoundBuffering(AmbientSound sound) =>
+      _audioPlayer.isSoundBuffering(sound.keyName);
 
   double get progress {
     if (_totalSeconds == 0) return 0.0;
@@ -65,7 +83,7 @@ class PomodoroController extends ChangeNotifier {
     if (_mode == newMode) return;
     _mode = newMode;
     // Hard-stop all audio when mode changes (25+5 <-> 50+10)
-    _stopAllAudioInternal();
+    _audioPlayer.stopAll();
     if (!_isRunning) {
       _resetToCurrentMode();
     }
@@ -90,7 +108,7 @@ class PomodoroController extends ChangeNotifier {
     _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
 
     // Resume or start active ambient audio if in focus phase
-    if (_phase == PomodoroPhase.focus && _activeSounds.isNotEmpty) {
+    if (_phase == PomodoroPhase.focus && _audioPlayer.hasActiveSounds) {
       _audioPlayer.resumeAll();
     }
 
@@ -114,7 +132,7 @@ class PomodoroController extends ChangeNotifier {
     _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
 
     // Resume ambient sounds in sync with timer
-    if (_phase == PomodoroPhase.focus && _activeSounds.isNotEmpty) {
+    if (_phase == PomodoroPhase.focus && _audioPlayer.hasActiveSounds) {
       _audioPlayer.resumeAll();
     }
 
@@ -129,7 +147,7 @@ class PomodoroController extends ChangeNotifier {
     _resetToCurrentMode();
 
     // Stop and clear audio on timer reset
-    _stopAllAudioInternal();
+    _audioPlayer.stopAll();
 
     notifyListeners();
   }
@@ -183,48 +201,20 @@ class PomodoroController extends ChangeNotifier {
       _isRunning = true;
       _isPaused = false;
       _ticker = Timer.periodic(const Duration(seconds: 1), _onTick);
-
-      // Re-trigger active sounds for next focus session
-      _restartActiveSounds();
-
       notifyListeners();
     }
   }
 
-  void _stopAllAudioInternal() {
-    _activeSounds.clear();
-    _audioPlayer.stopAll();
-  }
-
-  Future<void> _restartActiveSounds() async {
-    for (final sound in _activeSounds) {
-      await _audioPlayer.playSound(
-        sound.keyName,
-        sound.assetPath,
-        onAssetMissing: (soundKey) {
-          if (onAssetMissingNotice != null) {
-            onAssetMissingNotice!(soundKey);
-          }
-        },
-      );
-    }
-  }
-
-  // Multi-sound Ambient Audio Controls
+  // Multi-sound Ambient Audio Controls (Instant Zero-Lag Playback)
   Future<void> toggleAmbientSound(AmbientSound sound) async {
-    if (_activeSounds.contains(sound)) {
-      _activeSounds.remove(sound);
-      await _audioPlayer.stopSound(sound.keyName);
-      notifyListeners();
+    if (_audioPlayer.isSoundActive(sound.keyName)) {
+      await _audioPlayer.pauseSound(sound.keyName);
       return;
     }
 
-    _activeSounds.add(sound);
-    notifyListeners();
-
     final success = await _audioPlayer.playSound(
       sound.keyName,
-      sound.assetPath,
+      assetPath: sound.assetPath,
       onAssetMissing: (soundKey) {
         if (onAssetMissingNotice != null) {
           onAssetMissingNotice!(soundKey);
@@ -232,33 +222,29 @@ class PomodoroController extends ChangeNotifier {
       },
     );
 
-    // If timer is currently paused or in break phase, pause immediately after loading
+    // If timer is currently paused or in break phase, pause audio immediately
     if (_isPaused || _phase != PomodoroPhase.focus) {
       await _audioPlayer.pauseAll();
     }
 
-    if (!success) {
-      _activeSounds.remove(sound);
+    if (!success && onAssetMissingNotice != null) {
+      onAssetMissingNotice!(sound.keyName);
     }
-    notifyListeners();
   }
 
   Future<void> clearAllSounds() async {
-    _activeSounds.clear();
     await _audioPlayer.stopAll();
-    notifyListeners();
   }
 
   Future<void> setVolume(double val) async {
     await _audioPlayer.setVolume(val);
-    notifyListeners();
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
-    _stopAllAudioInternal();
-    _audioPlayer.dispose();
+    _audioPlayer.removeListener(_onAudioServiceUpdate);
+    _audioPlayer.stopAll();
     super.dispose();
   }
 }

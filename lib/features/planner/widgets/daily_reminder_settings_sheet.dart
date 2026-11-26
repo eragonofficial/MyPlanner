@@ -28,6 +28,7 @@ class DailyReminderSettingsSheet extends StatefulWidget {
 class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet> {
   late bool _isEnabled;
   late TimeOfDay _reminderTime;
+  late int _intervalHours;
   late TextEditingController _messageController;
   final NotificationService _notificationService = NotificationService();
 
@@ -35,6 +36,7 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
   void initState() {
     super.initState();
     _isEnabled = widget.localStorage.isDailyReminderEnabled();
+    _intervalHours = widget.localStorage.getReminderIntervalHours();
     final timeStr = widget.localStorage.getDailyReminderTime();
     final parts = timeStr.split(':');
     final hour = int.tryParse(parts.first) ?? 9;
@@ -106,6 +108,7 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
       await widget.localStorage.setDailyReminderEnabled(false);
       if (!kIsWeb) {
         await _notificationService.cancelDailyReminder();
+        await _notificationService.cancelHourlyPlanReminders();
       }
       await SupabaseService.syncUserReminderPreferences(
         enabled: false,
@@ -115,12 +118,23 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
     }
   }
 
+  Future<void> _changeInterval(int hours) async {
+    setState(() {
+      _intervalHours = hours;
+    });
+    await widget.localStorage.setReminderIntervalHours(hours);
+    if (_isEnabled) {
+      await _applySchedule();
+    }
+  }
+
   Future<void> _applySchedule() async {
     final timeStr = _formatTimeOfDay(_reminderTime);
     final customMsg = _messageController.text.trim();
 
     await widget.localStorage.setDailyReminderEnabled(true);
     await widget.localStorage.setDailyReminderTime(timeStr);
+    await widget.localStorage.setReminderIntervalHours(_intervalHours);
     if (customMsg.isNotEmpty) {
       await widget.localStorage.setDailyReminderMessage(customMsg);
     }
@@ -222,7 +236,7 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             // Toggle Card
             Container(
@@ -235,7 +249,7 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 title: Text(
                   _isEnabled
-                      ? LocaleKeys.taskCompleted.tr() // "Enabled" state
+                      ? LocaleKeys.taskCompleted.tr()
                       : LocaleKeys.taskPending.tr(),
                   style: TextStyle(
                     fontSize: 14,
@@ -254,9 +268,159 @@ class _DailyReminderSettingsSheetState extends State<DailyReminderSettingsSheet>
             ),
 
             if (_isEnabled) ...[
+              const SizedBox(height: 16),
+
+              // Hourly / 2-Hourly Plan Reminder Frequency Selector
+              Text(
+                LocaleKeys.reminderIntervalTitle.tr(),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _changeInterval(1),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _intervalHours == 1
+                              ? AppColors.primaryCyan.withValues(alpha: 0.15)
+                              : AppColors.glassSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _intervalHours == 1
+                                ? AppColors.primaryCyan
+                                : AppColors.glassBorder,
+                            width: _intervalHours == 1 ? 1.4 : 0.8,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.history_rounded,
+                              size: 20,
+                              color: _intervalHours == 1
+                                  ? AppColors.primaryCyan
+                                  : AppColors.textMuted,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              LocaleKeys.reminderEvery1Hour.tr(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: _intervalHours == 1
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: _intervalHours == 1
+                                    ? AppColors.primaryCyan
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _changeInterval(2),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _intervalHours == 2
+                              ? AppColors.primaryCyan.withValues(alpha: 0.15)
+                              : AppColors.glassSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _intervalHours == 2
+                                ? AppColors.primaryCyan
+                                : AppColors.glassBorder,
+                            width: _intervalHours == 2 ? 1.4 : 0.8,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.update_rounded,
+                              size: 20,
+                              color: _intervalHours == 2
+                                  ? AppColors.primaryCyan
+                                  : AppColors.textMuted,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              LocaleKeys.reminderEvery2Hours.tr(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: _intervalHours == 2
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: _intervalHours == 2
+                                    ? AppColors.primaryCyan
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Active Window (08:00 - 22:00) & Quiet Hours Note
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.wb_sunny_rounded, color: AppColors.primaryGreen, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            LocaleKeys.reminderActiveWindow.tr(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.nights_stay_rounded, color: AppColors.textMuted, size: 15),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            LocaleKeys.reminderQuietHours.tr(),
+                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 14),
 
-              // Time Picker Row
+              // Preferred Daily Overview Time Picker Row
               InkWell(
                 onTap: _pickTime,
                 borderRadius: BorderRadius.circular(14),

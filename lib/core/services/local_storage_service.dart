@@ -12,6 +12,7 @@ class LocalStorageService {
   static const String _keyDailyReminderEnabled = 'daily_reminder_enabled';
   static const String _keyDailyReminderTime = 'daily_reminder_time';
   static const String _keyDailyReminderMsg = 'daily_reminder_message';
+  static const String _keyReminderIntervalHours = 'reminder_interval_hours';
 
   final SharedPreferences _prefs;
 
@@ -126,5 +127,14 @@ class LocalStorageService {
 
   String? getDailyReminderMessage() {
     return _prefs.getString(_keyDailyReminderMsg);
+  }
+
+  // Smart Recurring Reminder Interval (1 hour or 2 hours)
+  Future<bool> setReminderIntervalHours(int hours) async {
+    return await _prefs.setInt(_keyReminderIntervalHours, hours);
+  }
+
+  int getReminderIntervalHours() {
+    return _prefs.getInt(_keyReminderIntervalHours) ?? 2;
   }
 }

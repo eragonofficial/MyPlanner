@@ -104,6 +104,38 @@ class NoteModel {
   })  : createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
+  /// Determines if an uncompleted plan has passed its period deadline at midnight (00:00)
+  bool isOverdue([DateTime? referenceTime]) {
+    if (isCompleted) return false;
+    final now = referenceTime ?? DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+
+    switch (periodType) {
+      case PeriodType.daily:
+        final planDay = DateTime(targetDate.year, targetDate.month, targetDate.day);
+        return planDay.isBefore(todayMidnight);
+
+      case PeriodType.weekly:
+        // Monday is weekday 1. Rollover happens at Sunday 24:00 (Monday 00:00)
+        final currentWeekStart =
+            todayMidnight.subtract(Duration(days: todayMidnight.weekday - 1));
+        final planDate = DateTime(targetDate.year, targetDate.month, targetDate.day);
+        final planWeekStart =
+            planDate.subtract(Duration(days: planDate.weekday - 1));
+        return planWeekStart.isBefore(currentWeekStart);
+
+      case PeriodType.monthly:
+        final currentMonthStart = DateTime(now.year, now.month, 1);
+        final planMonthStart = DateTime(targetDate.year, targetDate.month, 1);
+        return planMonthStart.isBefore(currentMonthStart);
+
+      case PeriodType.yearly:
+        final currentYearStart = DateTime(now.year, 1, 1);
+        final planYearStart = DateTime(targetDate.year, 1, 1);
+        return planYearStart.isBefore(currentYearStart);
+    }
+  }
+
   NoteModel copyWith({
     String? id,
     String? userId,

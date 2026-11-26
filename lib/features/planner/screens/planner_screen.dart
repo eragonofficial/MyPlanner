@@ -215,26 +215,184 @@ class PlannerScreen extends StatelessWidget {
     }
   }
 
+  Widget _buildFilterTabsRow(BuildContext context) {
+    final uncompletedCount = controller.uncompletedCountForActivePeriod;
+    final isUncompletedSelected =
+        controller.currentFilterTab == PlanFilterTab.uncompleted;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.glassBorder, width: 0.8),
+      ),
+      child: Row(
+        children: [
+          // Active Plans Tab
+          Expanded(
+            child: InkWell(
+              onTap: () => controller.setFilterTab(PlanFilterTab.active),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: !isUncompletedSelected
+                      ? AppColors.primaryCyan.withValues(alpha: 0.2)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: !isUncompletedSelected
+                      ? Border.all(color: AppColors.primaryCyan, width: 1)
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 15,
+                      color: !isUncompletedSelected
+                          ? AppColors.primaryCyan
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      LocaleKeys.allPlansTab.tr(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: !isUncompletedSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: !isUncompletedSelected
+                            ? AppColors.primaryCyan
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Uncompleted (Overdue) Plans Tab with Badge
+          Expanded(
+            child: InkWell(
+              onTap: () => controller.setFilterTab(PlanFilterTab.uncompleted),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isUncompletedSelected
+                      ? AppColors.accentRed.withValues(alpha: 0.2)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: isUncompletedSelected
+                      ? Border.all(color: AppColors.accentRed, width: 1)
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 15,
+                      color: isUncompletedSelected
+                          ? AppColors.accentRed
+                          : AppColors.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      LocaleKeys.uncompletedPlansTab.tr(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isUncompletedSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isUncompletedSelected
+                            ? AppColors.accentRed
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (uncompletedCount > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentRed,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$uncompletedCount',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
         final isGuest = !SupabaseService.isAuthenticated;
-        final realNotes = controller.filteredNotes;
-        final isUsingSampleNotes = isGuest && controller.allNotes.isEmpty && realNotes.isEmpty;
-        final displayNotes = isUsingSampleNotes ? _getSampleGuestNotes() : realNotes;
+        final isUncompletedTab =
+            controller.currentFilterTab == PlanFilterTab.uncompleted;
+        final realNotes = controller.displayNotes;
+        final isUsingSampleNotes =
+            isGuest && controller.allNotes.isEmpty && realNotes.isEmpty;
+        final displayNotes =
+            isUsingSampleNotes ? _getSampleGuestNotes() : realNotes;
 
-        final total = isUsingSampleNotes ? displayNotes.length : controller.totalForActivePeriod;
+        final total = isUsingSampleNotes
+            ? displayNotes.length
+            : (isUncompletedTab
+                ? controller.uncompletedCountForActivePeriod
+                : controller.totalForActivePeriod);
         final completed = isUsingSampleNotes
             ? displayNotes.where((n) => n.isCompleted).length
-            : controller.completedForActivePeriod;
+            : (isUncompletedTab ? 0 : controller.completedForActivePeriod);
         final progress = total > 0 ? (completed / total) : 0.0;
 
-        // Current period display title
-        final String headerTitle = controller.isAllPlansSelected
-            ? LocaleKeys.allPlans.tr()
-            : controller.activePeriod!.labelKey.tr();
+        // Current period display title (Dynamic based on Active vs Uncompleted)
+        String headerTitle;
+        if (isUncompletedTab) {
+          switch (controller.activePeriod) {
+            case PeriodType.daily:
+              headerTitle = LocaleKeys.uncompletedDailyPlans.tr();
+              break;
+            case PeriodType.weekly:
+              headerTitle = LocaleKeys.uncompletedWeeklyPlans.tr();
+              break;
+            case PeriodType.monthly:
+              headerTitle = LocaleKeys.uncompletedMonthlyPlans.tr();
+              break;
+            case PeriodType.yearly:
+              headerTitle = LocaleKeys.uncompletedYearlyPlans.tr();
+              break;
+            case null:
+              headerTitle = LocaleKeys.uncompletedPlans.tr();
+              break;
+          }
+        } else {
+          headerTitle = controller.isAllPlansSelected
+              ? LocaleKeys.allPlans.tr()
+              : controller.activePeriod!.labelKey.tr();
+        }
 
         return Scaffold(
           backgroundColor: AppColors.darkBg,
@@ -539,16 +697,23 @@ class PlannerScreen extends StatelessWidget {
                       if (isUsingSampleNotes) {
                         return type == controller.activePeriod ? displayNotes.length : 0;
                       }
-                      return controller.getCountForPeriod(type);
+                      return isUncompletedTab
+                          ? controller.getUncompletedCountForPeriod(type)
+                          : controller.getCountForPeriod(type);
                     },
                   ),
                 ),
 
-                // Dynamic Real Calendar Navigator Bar (when viewing a specific period)
-                if (controller.activePeriod != null)
+                // Dynamic Real Calendar Navigator Bar (when viewing a specific period in active mode)
+                if (controller.activePeriod != null && !isUncompletedTab)
                   SliverToBoxAdapter(
                     child: CalendarNavigatorBar(controller: controller),
                   ),
+
+                // Sub-Tab Switcher: Active Plans vs Uncompleted Plans
+                SliverToBoxAdapter(
+                  child: _buildFilterTabsRow(context),
+                ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
@@ -566,18 +731,30 @@ class PlannerScreen extends StatelessWidget {
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.glassSurface,
-                                border: Border.all(color: AppColors.glassBorder),
+                                color: isUncompletedTab
+                                    ? AppColors.primaryGreen.withValues(alpha: 0.15)
+                                    : AppColors.glassSurface,
+                                border: Border.all(
+                                  color: isUncompletedTab
+                                      ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                                      : AppColors.glassBorder,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.assignment_outlined,
+                              child: Icon(
+                                isUncompletedTab
+                                    ? Icons.task_alt_rounded
+                                    : Icons.assignment_outlined,
                                 size: 48,
-                                color: AppColors.textMuted,
+                                color: isUncompletedTab
+                                    ? AppColors.primaryGreen
+                                    : AppColors.textMuted,
                               ),
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              LocaleKeys.emptyTasksTitle.tr(),
+                              isUncompletedTab
+                                  ? LocaleKeys.noUncompletedPlans.tr()
+                                  : LocaleKeys.emptyTasksTitle.tr(),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 17,
@@ -587,7 +764,9 @@ class PlannerScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              LocaleKeys.emptyTasksDesc.tr(),
+                              isUncompletedTab
+                                  ? LocaleKeys.plannerSubtitle.tr()
+                                  : LocaleKeys.emptyTasksDesc.tr(),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 13,
@@ -595,18 +774,33 @@ class PlannerScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 20),
-                            ElevatedButton.icon(
-                              onPressed: () => _showAddEditDialog(context),
-                              icon: const Icon(Icons.add, size: 18),
-                              label: Text(LocaleKeys.addTaskBtn.tr()),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryCyan,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            if (isUncompletedTab)
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    controller.setFilterTab(PlanFilterTab.active),
+                                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                                label: Text(LocaleKeys.allPlansTab.tr()),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryCyan,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              )
+                            else
+                              ElevatedButton.icon(
+                                onPressed: () => _showAddEditDialog(context),
+                                icon: const Icon(Icons.add, size: 18),
+                                label: Text(LocaleKeys.addTaskBtn.tr()),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryCyan,
+                                  foregroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -630,6 +824,35 @@ class PlannerScreen extends StatelessWidget {
                           onDelete: () {
                             if (!_checkAuth(context)) return;
                             _confirmDelete(context, note);
+                          },
+                          onReschedule: () async {
+                            if (!_checkAuth(context)) return;
+                            await controller.rescheduleNote(note);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: AppColors.darkBgSecondary,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  content: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle_rounded,
+                                          color: AppColors.primaryGreen, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        LocaleKeys.rescheduledSuccess.tr(),
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
                           },
                         );
                       },

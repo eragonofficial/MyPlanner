@@ -30,6 +30,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     super.initState();
     widget.controller.onAssetMissingNotice = _showAssetMissingNotice;
     widget.controller.onNotification = _showNotificationDialog;
+    widget.controller.preloadSounds();
   }
 
   void _showAssetMissingNotice(String soundKey) {
@@ -371,6 +372,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             volume: controller.volume,
                             onVolumeChanged: controller.setVolume,
                             isPaused: controller.isPaused,
+                            isSoundBuffering: controller.isSoundBuffering,
                           ),
 
                           const SizedBox(height: 16),

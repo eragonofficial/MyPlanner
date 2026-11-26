@@ -367,6 +367,7 @@ class AppDrawer extends StatelessWidget {
     final storage = localStorage;
     final isEnabled = storage?.isDailyReminderEnabled() ?? false;
     final reminderTime = storage?.getDailyReminderTime() ?? '09:00';
+    final interval = storage?.getReminderIntervalHours() ?? 2;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -400,7 +401,9 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           child: Text(
-            isEnabled ? reminderTime : LocaleKeys.taskPending.tr(),
+            isEnabled
+                ? '$reminderTime (${interval == 1 ? LocaleKeys.reminderEvery1Hour.tr() : LocaleKeys.reminderEvery2Hours.tr()})'
+                : LocaleKeys.taskPending.tr(),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,

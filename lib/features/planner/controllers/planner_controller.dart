@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/services/supabase_service.dart';
@@ -11,11 +12,17 @@ enum SyncStatus {
   error,
 }
 
+enum PlanFilterTab {
+  active,
+  uncompleted,
+}
+
 class PlannerController extends ChangeNotifier {
   final PlannerRepository _repository;
   final NotificationService _notificationService = NotificationService();
 
   PeriodType? _activePeriod = PeriodType.daily;
+  PlanFilterTab _currentFilterTab = PlanFilterTab.active;
   List<NoteModel> _notes = [];
   bool _isLoading = false;
 
@@ -24,10 +31,12 @@ class PlannerController extends ChangeNotifier {
 
   // Real Gregorian Calendar state, dynamically initialized to DateTime.now()
   late DateTime _selectedDate;
+  Timer? _midnightTimer;
 
   PlannerController(this._repository) {
     _initCalendarDate();
     _loadInitialNotes();
+    _startMidnightTimer();
     syncWithCloud();
   }
 
@@ -36,9 +45,41 @@ class PlannerController extends ChangeNotifier {
     _selectedDate = DateTime(now.year, now.month, now.day);
   }
 
+  void _startMidnightTimer() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final diff = nextMidnight.difference(now) + const Duration(seconds: 1);
+
+    _midnightTimer = Timer(diff, () {
+      _onMidnightRollover();
+      _startMidnightTimer(); // Chain to next midnight
+    });
+  }
+
+  void _onMidnightRollover() {
+    debugPrint('Midnight (00:00) auto-rollover check triggered!');
+    if (isSelectedDateToday) {
+      _selectedDate = today;
+    }
+    _rescheduleActiveReminders();
+    notifyListeners();
+  }
+
   void _loadInitialNotes() {
     _notes = _repository.loadInitialNotes();
     _rescheduleActiveReminders();
+  }
+
+  PlannerRepository get repository => _repository;
+
+  // Filter Tabs: Active Plans vs Uncompleted (Overdue) Plans
+  PlanFilterTab get currentFilterTab => _currentFilterTab;
+
+  void setFilterTab(PlanFilterTab tab) {
+    if (_currentFilterTab == tab) return;
+    _currentFilterTab = tab;
+    notifyListeners();
   }
 
   // Sync Getters
@@ -181,10 +222,40 @@ class PlannerController extends ChangeNotifier {
     return list;
   }
 
+  // Overdue Uncompleted plans for the active period (rolled over at midnight)
+  List<NoteModel> get uncompletedNotesForActivePeriod {
+    final list = _notes.where((note) {
+      if (note.isCompleted) return false;
+      if (!note.isOverdue()) return false;
+      if (_activePeriod == null) return true;
+      return note.periodType == _activePeriod;
+    }).toList();
+
+    list.sort((a, b) {
+      final pCompare = b.priority.index.compareTo(a.priority.index);
+      if (pCompare != 0) return pCompare;
+      return b.targetDate.compareTo(a.targetDate); // Most recently missed first
+    });
+
+    return list;
+  }
+
+  // Display notes reflecting current filter tab (Active vs Uncompleted)
+  List<NoteModel> get displayNotes =>
+      _currentFilterTab == PlanFilterTab.uncompleted
+          ? uncompletedNotesForActivePeriod
+          : filteredNotes;
+
   int get totalForActivePeriod => filteredNotes.length;
 
   int get completedForActivePeriod =>
       filteredNotes.where((n) => n.isCompleted).length;
+
+  int get uncompletedCountForActivePeriod =>
+      uncompletedNotesForActivePeriod.length;
+
+  int get totalUncompletedCount =>
+      _notes.where((n) => !n.isCompleted && n.isOverdue()).length;
 
   int getCountForPeriod(PeriodType type) {
     return _notes.where((n) {
@@ -203,6 +274,12 @@ class PlannerController extends ChangeNotifier {
           return target.year == _selectedDate.year;
       }
     }).length;
+  }
+
+  int getUncompletedCountForPeriod(PeriodType type) {
+    return _notes
+        .where((n) => !n.isCompleted && n.periodType == type && n.isOverdue())
+        .length;
   }
 
   void setPeriodType(PeriodType? period) {
@@ -265,6 +342,7 @@ class PlannerController extends ChangeNotifier {
   }
 
   void _rescheduleActiveReminders() {
+    // 1. Specific single-task reminders
     for (final n in _notes) {
       if (!n.isCompleted && n.reminderTime != null && n.reminderTime!.isAfter(DateTime.now())) {
         _notificationService.scheduleTaskReminder(
@@ -275,6 +353,42 @@ class PlannerController extends ChangeNotifier {
         );
       }
     }
+
+    // 2. Dynamic hourly / 2-hourly plan-specific reminders between 08:00 and 22:00
+    updateHourlyPlanReminders();
+  }
+
+  void updateHourlyPlanReminders() {
+    final isDailyReminderEnabled = _repository.localStorage.isDailyReminderEnabled();
+    if (!isDailyReminderEnabled) {
+      _notificationService.cancelHourlyPlanReminders();
+      return;
+    }
+
+    final intervalHours = _repository.localStorage.getReminderIntervalHours();
+    final todayMidnight = today;
+    final tomorrowMidnight = todayMidnight.add(const Duration(days: 1));
+
+    // Active uncompleted plans due today or pending
+    final pendingPlans = _notes
+        .where((n) =>
+            !n.isCompleted &&
+            (n.periodType == PeriodType.daily &&
+                !n.targetDate.isBefore(todayMidnight) &&
+                n.targetDate.isBefore(tomorrowMidnight)))
+        .map((n) => n.title.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+
+    // Fallback to any active uncompleted plans if no daily plans due today
+    final titlesToRemind = pendingPlans.isNotEmpty
+        ? pendingPlans
+        : _notes.where((n) => !n.isCompleted).map((n) => n.title.trim()).toList();
+
+    _notificationService.scheduleHourlyPlanReminders(
+      intervalHours: intervalHours,
+      uncompletedPlanTitles: titlesToRemind,
+    );
   }
 
   Future<void> addNote({
@@ -315,6 +429,7 @@ class PlannerController extends ChangeNotifier {
         reminderTime: reminderTime,
       );
     }
+    updateHourlyPlanReminders();
 
     await _repository.addNote(newNote, _notes);
     if (SupabaseService.isAuthenticated) {
@@ -344,6 +459,7 @@ class PlannerController extends ChangeNotifier {
         reminderTime: updated.reminderTime!,
       );
     }
+    updateHourlyPlanReminders();
 
     await _repository.updateNote(updated, _notes);
     if (SupabaseService.isAuthenticated) {
@@ -351,6 +467,18 @@ class PlannerController extends ChangeNotifier {
       _lastSyncTime = DateTime.now();
       notifyListeners();
     }
+  }
+
+  /// Reschedules an overdue / uncompleted plan to a new target date (default: today)
+  Future<void> rescheduleNote(NoteModel note, [DateTime? newTargetDate]) async {
+    if (!SupabaseService.isAuthenticated) return;
+    final target = newTargetDate ?? today;
+    final updated = note.copyWith(
+      targetDate: target,
+      isCompleted: false,
+      updatedAt: DateTime.now(),
+    );
+    await updateNote(updated);
   }
 
   Future<void> toggleComplete(NoteModel note) async {
@@ -373,6 +501,7 @@ class PlannerController extends ChangeNotifier {
         reminderTime: updated.reminderTime!,
       );
     }
+    updateHourlyPlanReminders();
 
     await _repository.toggleComplete(note, _notes);
     if (SupabaseService.isAuthenticated) {
@@ -389,11 +518,19 @@ class PlannerController extends ChangeNotifier {
     notifyListeners();
 
     _notificationService.cancelTaskReminder(noteId);
+    updateHourlyPlanReminders();
+
     await _repository.deleteNote(noteId, _notes);
     if (SupabaseService.isAuthenticated) {
       _syncStatus = SyncStatus.synced;
       _lastSyncTime = DateTime.now();
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel();
+    super.dispose();
   }
 }

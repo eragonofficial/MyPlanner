@@ -12,6 +12,7 @@ class AmbientSoundBar extends StatelessWidget {
   final double volume;
   final ValueChanged<double> onVolumeChanged;
   final bool isPaused;
+  final bool Function(AmbientSound)? isSoundBuffering;
 
   const AmbientSoundBar({
     super.key,
@@ -21,6 +22,7 @@ class AmbientSoundBar extends StatelessWidget {
     required this.volume,
     required this.onVolumeChanged,
     this.isPaused = false,
+    this.isSoundBuffering,
   });
 
   @override
@@ -135,6 +137,8 @@ class AmbientSoundBar extends StatelessWidget {
             child: Row(
               children: AmbientSound.values.map((sound) {
                 final isSelected = activeSounds.contains(sound);
+                final isBuffering = isSoundBuffering != null && isSoundBuffering!(sound);
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(
@@ -187,16 +191,28 @@ class AmbientSoundBar extends StatelessWidget {
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 6),
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isPaused
-                                    ? Colors.amber
-                                    : AppColors.primaryGreen,
+                            if (isBuffering)
+                              const SizedBox(
+                                width: 8,
+                                height: 8,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.primaryGreen,
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isPaused
+                                      ? Colors.amber
+                                      : AppColors.primaryGreen,
+                                ),
                               ),
-                            ),
                           ],
                         ],
                       ),

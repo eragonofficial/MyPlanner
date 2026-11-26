@@ -14,6 +14,8 @@ class PlannerRepository {
 
   PlannerRepository(this._localStorage);
 
+  LocalStorageService get localStorage => _localStorage;
+
   bool get isCloudSyncAvailable => SupabaseService.isReady;
 
   /// Loads cached notes for authenticated user immediately; returns empty for unauthenticated users

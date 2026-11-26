@@ -9,6 +9,7 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onReschedule;
 
   const NoteCard({
     super.key,
@@ -16,12 +17,14 @@ class NoteCard extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
+    this.onReschedule,
   });
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat.yMMMd(context.locale.toString());
     final formattedDate = dateFormat.format(note.targetDate);
+    final isOverdue = note.isOverdue();
 
     return Dismissible(
       key: ValueKey(note.id),
@@ -31,7 +34,7 @@ class NoteCard extends StatelessWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.accentRed.withOpacity(0.8),
+          color: AppColors.accentRed.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
@@ -41,13 +44,17 @@ class NoteCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: note.isCompleted
-              ? AppColors.darkBgSecondary.withOpacity(0.6)
-              : AppColors.darkBgCard,
+              ? AppColors.darkBgSecondary.withValues(alpha: 0.6)
+              : (isOverdue
+                  ? AppColors.darkBgCard
+                  : AppColors.darkBgCard),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: note.isCompleted
-                ? AppColors.glassBorder.withOpacity(0.4)
-                : note.priority.color.withOpacity(0.3),
+                ? AppColors.glassBorder.withValues(alpha: 0.4)
+                : (isOverdue
+                    ? AppColors.accentRed.withValues(alpha: 0.4)
+                    : note.priority.color.withValues(alpha: 0.3)),
             width: 1,
           ),
         ),
@@ -57,12 +64,12 @@ class NoteCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Priority color indicator bar
+                // Priority / Overdue color indicator bar
                 Container(
                   width: 5,
                   color: note.isCompleted
-                      ? AppColors.textMuted.withOpacity(0.5)
-                      : note.priority.color,
+                      ? AppColors.textMuted.withValues(alpha: 0.5)
+                      : (isOverdue ? AppColors.accentRed : note.priority.color),
                 ),
                 Expanded(
                   child: Padding(
@@ -89,7 +96,9 @@ class NoteCard extends StatelessWidget {
                                   border: Border.all(
                                     color: note.isCompleted
                                         ? AppColors.primaryGreen
-                                        : AppColors.textSecondary,
+                                        : (isOverdue
+                                            ? AppColors.accentRed
+                                            : AppColors.textSecondary),
                                     width: 2,
                                   ),
                                 ),
@@ -103,19 +112,51 @@ class NoteCard extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    note.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: note.isCompleted
-                                          ? AppColors.textMuted
-                                          : AppColors.textPrimary,
-                                      decoration: note.isCompleted
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      decorationColor: AppColors.textMuted,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          note.title,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: note.isCompleted
+                                                ? AppColors.textMuted
+                                                : AppColors.textPrimary,
+                                            decoration: note.isCompleted
+                                                ? TextDecoration.lineThrough
+                                                : null,
+                                            decorationColor: AppColors.textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isOverdue) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accentRed
+                                                .withValues(alpha: 0.15),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            border: Border.all(
+                                              color: AppColors.accentRed
+                                                  .withValues(alpha: 0.4),
+                                              width: 0.8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            LocaleKeys.uncompletedPlans.tr(),
+                                            style: const TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.accentRed,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                   if (note.description.isNotEmpty) ...[
                                     const SizedBox(height: 4),
@@ -126,7 +167,7 @@ class NoteCard extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: note.isCompleted
-                                            ? AppColors.textMuted.withOpacity(0.7)
+                                            ? AppColors.textMuted.withValues(alpha: 0.7)
                                             : AppColors.textSecondary,
                                       ),
                                     ),
@@ -134,7 +175,7 @@ class NoteCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            // Actions Menu (Edit / Delete)
+                            // Actions Menu (Reschedule / Edit / Delete)
                             PopupMenuButton<String>(
                               icon: const Icon(
                                 Icons.more_vert,
@@ -147,10 +188,29 @@ class NoteCard extends StatelessWidget {
                                 side: const BorderSide(color: AppColors.glassBorder),
                               ),
                               onSelected: (val) {
+                                if (val == 'reschedule' && onReschedule != null) {
+                                  onReschedule!();
+                                }
                                 if (val == 'edit') onEdit();
                                 if (val == 'delete') onDelete();
                               },
                               itemBuilder: (context) => [
+                                if (isOverdue && onReschedule != null)
+                                  PopupMenuItem(
+                                    value: 'reschedule',
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.event_repeat_rounded,
+                                            size: 18, color: AppColors.primaryCyan),
+                                        const SizedBox(width: 8),
+                                        Text(LocaleKeys.rescheduleToToday.tr(),
+                                            style: const TextStyle(
+                                                fontSize: 14,
+                                                color: AppColors.primaryCyan,
+                                                fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
                                 PopupMenuItem(
                                   value: 'edit',
                                   child: Row(
@@ -181,17 +241,17 @@ class NoteCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        // Bottom row: Priority pill and Target Date
+                        // Bottom row: Priority pill, Target Date, and Quick Reschedule Button
                         Row(
                           children: [
                             // Priority badge
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: note.priority.color.withOpacity(0.15),
+                                color: note.priority.color.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: note.priority.color.withOpacity(0.4),
+                                  color: note.priority.color.withValues(alpha: 0.4),
                                   width: 0.8,
                                 ),
                               ),
@@ -208,17 +268,18 @@ class NoteCard extends StatelessWidget {
                             // Target date
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_today_outlined,
                                   size: 13,
-                                  color: AppColors.textMuted,
+                                  color: isOverdue ? AppColors.accentRed : AppColors.textMuted,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   formattedDate,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textMuted,
+                                    color: isOverdue ? AppColors.accentRed : AppColors.textMuted,
+                                    fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                               ],
@@ -249,19 +310,54 @@ class NoteCard extends StatelessWidget {
                               ),
                             ],
                             const Spacer(),
-                            // Status label
-                            Text(
-                              note.isCompleted
-                                  ? LocaleKeys.taskCompleted.tr()
-                                  : LocaleKeys.taskPending.tr(),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: note.isCompleted
-                                    ? AppColors.primaryGreen
-                                    : AppColors.textMuted,
+
+                            // Quick Reschedule action or Status label
+                            if (isOverdue && onReschedule != null)
+                              InkWell(
+                                onTap: onReschedule,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.event_repeat_rounded,
+                                          size: 13, color: AppColors.primaryCyan),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        LocaleKeys.rescheduleToToday.tr(),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryCyan,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              Text(
+                                note.isCompleted
+                                    ? LocaleKeys.taskCompleted.tr()
+                                    : LocaleKeys.taskPending.tr(),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: note.isCompleted
+                                      ? AppColors.primaryGreen
+                                      : AppColors.textMuted,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ],

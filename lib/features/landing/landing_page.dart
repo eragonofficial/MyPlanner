@@ -3,11 +3,53 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/language_manager.dart';
 import '../../../core/localization/locale_keys.dart';
+import 'widgets/aurora_particle_background.dart';
+import 'widgets/interactive_glass_card.dart';
+import 'widgets/interactive_try_live_widget.dart';
+import 'widgets/shimmer_cta_button.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   final VoidCallback onSignInPressed;
 
   const LandingPage({super.key, required this.onSignInPressed});
+
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,42 +57,62 @@ class LandingPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.darkBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Navigation Bar
-            _buildNavbar(context),
+      body: AuroraParticleBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Floating Glass Navigation Bar
+              _buildNavbar(context),
 
-            // Scrollable Content
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Hero Section
-                    _buildHeroSection(context, isDesktop),
+              // Scrollable SaaS Showcase Content
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 16),
 
-                    const SizedBox(height: 48),
+                          // Hero Section
+                          _buildHeroSection(context, isDesktop),
 
-                    // Feature Showcase Cards
-                    _buildFeatureShowcase(context, isDesktop),
+                          const SizedBox(height: 24),
 
-                    const SizedBox(height: 60),
+                          // "Try It Live" Mini-Sandbox Interactive Widget
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: InteractiveTryLiveWidget(
+                              onStartPlanning: widget.onSignInPressed,
+                            ),
+                          ),
 
-                    // Bottom Call to Action Banner
-                    _buildBottomCta(context),
+                          const SizedBox(height: 64),
 
-                    const SizedBox(height: 36),
+                          // 3D Tilt Feature Showcase Cards
+                          _buildFeatureShowcase(context, isDesktop),
 
-                    // Footer
-                    _buildFooter(context),
+                          const SizedBox(height: 64),
 
-                    const SizedBox(height: 24),
-                  ],
+                          // Bottom Call to Action Banner
+                          _buildBottomCta(context),
+
+                          const SizedBox(height: 48),
+
+                          // Footer
+                          _buildFooter(context),
+
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -59,15 +121,15 @@ class LandingPage extends StatelessWidget {
   Widget _buildNavbar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: const BoxDecoration(
-        color: AppColors.darkBgSecondary,
-        border: Border(
+      decoration: BoxDecoration(
+        color: AppColors.darkBgSecondary.withValues(alpha: 0.8),
+        border: const Border(
           bottom: BorderSide(color: AppColors.glassBorder, width: 0.8),
         ),
       ),
       child: Row(
         children: [
-          // Brand Logo & Title
+          // Brand Logo & Title with Gradient Aura
           Container(
             width: 36,
             height: 36,
@@ -78,8 +140,9 @@ class LandingPage extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryCyan.withValues(alpha: 0.35),
-                  blurRadius: 10,
+                  color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  spreadRadius: 1,
                 ),
               ],
             ),
@@ -105,7 +168,7 @@ class LandingPage extends StatelessWidget {
 
           // Sign In CTA Button
           ElevatedButton.icon(
-            onPressed: onSignInPressed,
+            onPressed: widget.onSignInPressed,
             icon: const Icon(Icons.login_rounded, size: 16),
             label: Text(
               LocaleKeys.signIn.tr(),
@@ -199,17 +262,23 @@ class LandingPage extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 960),
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 32 : 20,
-        vertical: isDesktop ? 54 : 32,
+        vertical: isDesktop ? 36 : 24,
       ),
       child: Column(
         children: [
-          // Badge Pill
+          // Glowing Badge Pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.primaryCyan.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.4)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -229,21 +298,32 @@ class LandingPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Main Headline
-          Text(
-            LocaleKeys.landingHeroTitle.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: isDesktop ? 40 : 28,
-              fontWeight: FontWeight.w900,
-              height: 1.25,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.5,
+          // Main Headline with Gradient Shimmer
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                AppColors.textPrimary,
+                Colors.white,
+                AppColors.primaryCyan.withValues(alpha: 0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Text(
+              LocaleKeys.landingHeroTitle.tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isDesktop ? 44 : 30,
+                fontWeight: FontWeight.w900,
+                height: 1.2,
+                color: Colors.white,
+                letterSpacing: -0.8,
+              ),
             ),
           ),
           const SizedBox(height: 18),
 
-          // Subtitle / Mission
+          // Subtitle / Mission statement
           Container(
             constraints: const BoxConstraints(maxWidth: 680),
             child: Text(
@@ -256,32 +336,23 @@ class LandingPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
-          // CTA Buttons
+          // Primary Shimmer CTA Buttons
           Wrap(
             spacing: 16,
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              ElevatedButton.icon(
-                onPressed: onSignInPressed,
-                icon: const Icon(Icons.rocket_launch_rounded, size: 18),
-                label: Text(
-                  LocaleKeys.landingGetStarted.tr(),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  shadowColor: AppColors.primaryGreen.withValues(alpha: 0.4),
-                ),
+              ShimmerCtaButton(
+                onPressed: widget.onSignInPressed,
+                label: LocaleKeys.landingGetStarted.tr(),
+                icon: Icons.rocket_launch_rounded,
+                primaryColor: AppColors.primaryGreen,
+                textColor: Colors.black,
               ),
               OutlinedButton.icon(
-                onPressed: onSignInPressed,
+                onPressed: widget.onSignInPressed,
                 icon: const Icon(Icons.account_circle_outlined, size: 18),
                 label: Text(
                   LocaleKeys.signIn.tr(),
@@ -338,9 +409,9 @@ class LandingPage extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                childAspectRatio: 1.8,
+                crossAxisSpacing: 22,
+                mainAxisSpacing: 22,
+                childAspectRatio: 1.85,
               ),
               itemCount: features.length,
               itemBuilder: (context, i) => _buildFeatureCard(features[i]),
@@ -348,7 +419,7 @@ class LandingPage extends StatelessWidget {
           : Column(
               children: features
                   .map((f) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.only(bottom: 18),
                         child: _buildFeatureCard(f),
                       ))
                   .toList(),
@@ -357,41 +428,37 @@ class LandingPage extends StatelessWidget {
   }
 
   Widget _buildFeatureCard(_FeatureData feature) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: AppColors.darkBgSecondary,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.glassBorder, width: 0.8),
-      ),
+    return InteractiveGlassCard(
+      accentColor: feature.color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: feature.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: feature.color.withValues(alpha: 0.35)),
             ),
-            child: Icon(feature.icon, color: feature.color, size: 24),
+            child: Icon(feature.icon, color: feature.color, size: 26),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             feature.titleKey.tr(),
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             feature.descKey.tr(),
             style: const TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
-              height: 1.45,
+              height: 1.5,
             ),
           ),
         ],
@@ -403,46 +470,54 @@ class LandingPage extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 880),
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(36),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primaryCyan.withValues(alpha: 0.15),
-            AppColors.primaryGreen.withValues(alpha: 0.15),
+            AppColors.primaryCyan.withValues(alpha: 0.16),
+            AppColors.primaryGreen.withValues(alpha: 0.16),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryCyan.withValues(alpha: 0.15),
+            blurRadius: 32,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          const Icon(Icons.verified_user_rounded, color: AppColors.primaryGreen, size: 36),
-          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primaryGreen.withValues(alpha: 0.2),
+            ),
+            child: const Icon(Icons.verified_user_rounded, color: AppColors.primaryGreen, size: 36),
+          ),
+          const SizedBox(height: 16),
           Text(
             LocaleKeys.landingHeroTitle.tr(),
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 18),
-          ElevatedButton(
-            onPressed: onSignInPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            child: Text(
-              LocaleKeys.landingGetStarted.tr(),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
+          const SizedBox(height: 22),
+          ShimmerCtaButton(
+            onPressed: widget.onSignInPressed,
+            label: LocaleKeys.landingStartFreeCta.tr(),
+            icon: Icons.rocket_launch_rounded,
+            primaryColor: AppColors.primaryCyan,
+            textColor: Colors.black,
+            fontSize: 16,
           ),
         ],
       ),
@@ -451,7 +526,7 @@ class LandingPage extends StatelessWidget {
 
   Widget _buildFooter(BuildContext context) {
     return Text(
-      '${LocaleKeys.appName.tr()} • 2026',
+      '${LocaleKeys.appName.tr()} • 2026 • Linear / Notion / Framer inspired',
       style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
     );
   }

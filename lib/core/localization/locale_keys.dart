@@ -199,6 +199,13 @@ class LocaleKeys {
   static const String landingHeroTitle = 'landing_hero_title';
   static const String landingHeroSubtitle = 'landing_hero_subtitle';
   static const String landingGetStarted = 'landing_get_started';
+  static const String landingTryLive = 'landing_try_live';
+  static const String landingLivePreview = 'landing_live_preview';
+  static const String landingSandboxTask1 = 'landing_sandbox_task1';
+  static const String landingSandboxTask2 = 'landing_sandbox_task2';
+  static const String landingSandboxTask3 = 'landing_sandbox_task3';
+  static const String landingSandboxPomodoro = 'landing_sandbox_pomodoro';
+  static const String landingStartFreeCta = 'landing_start_free_cta';
   static const String landingFeaturePlanningTitle = 'landing_feature_planning_title';
   static const String landingFeaturePlanningDesc = 'landing_feature_planning_desc';
   static const String landingFeatureDashboardTitle = 'landing_feature_dashboard_title';
@@ -207,4 +214,25 @@ class LocaleKeys {
   static const String landingFeaturePomodoroDesc = 'landing_feature_pomodoro_desc';
   static const String landingFeatureSyncTitle = 'landing_feature_sync_title';
   static const String landingFeatureSyncDesc = 'landing_feature_sync_desc';
+
+  // Smart Recurring Reminders & Uncompleted Plans Rollover
+  static const String uncompletedPlans = 'uncompleted_plans';
+  static const String uncompletedDailyPlans = 'uncompleted_daily_plans';
+  static const String uncompletedWeeklyPlans = 'uncompleted_weekly_plans';
+  static const String uncompletedMonthlyPlans = 'uncompleted_monthly_plans';
+  static const String uncompletedYearlyPlans = 'uncompleted_yearly_plans';
+  static const String allPlansTab = 'all_plans_tab';
+  static const String uncompletedPlansTab = 'uncompleted_plans_tab';
+  static const String rescheduleToToday = 'reschedule_to_today';
+  static const String reschedulePlan = 'reschedule_plan';
+  static const String rescheduledSuccess = 'rescheduled_success';
+  static const String noUncompletedPlans = 'no_uncompleted_plans';
+  static const String reminderIntervalTitle = 'reminder_interval_title';
+  static const String reminderEvery1Hour = 'reminder_every_1_hour';
+  static const String reminderEvery2Hours = 'reminder_every_2_hours';
+  static const String reminderActiveWindow = 'reminder_active_window';
+  static const String reminderQuietHours = 'reminder_quiet_hours';
+  static const String planReminderNotificationTitle = 'plan_reminder_notification_title';
+  static const String planReminderSingleMsg = 'plan_reminder_single_msg';
+  static const String planReminderMultiMsg = 'plan_reminder_multi_msg';
 }

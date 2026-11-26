@@ -250,4 +250,114 @@ class NotificationService {
       debugPrint('Failed to cancel notification: $e');
     }
   }
+
+  static const int hourlyReminderBaseId = 2000;
+
+  /// Schedules dynamic hourly/2-hourly plan-specific reminders between 08:00 and 22:00 (10:00 PM).
+  /// Stops automatically at 22:00 to avoid nighttime disturbance.
+  Future<void> scheduleHourlyPlanReminders({
+    required int intervalHours,
+    required List<String> uncompletedPlanTitles,
+    String? title,
+    String? singlePlanBody,
+    String? multiPlanBody,
+  }) async {
+    if (kIsWeb) return;
+    if (!_isInitialized) {
+      await initialize();
+    }
+
+    // Cancel all previous hourly reminder slots first
+    await cancelHourlyPlanReminders();
+
+    // If no uncompleted plans, no need to schedule reminders
+    if (uncompletedPlanTitles.isEmpty) {
+      debugPrint('No uncompleted plans pending; hourly reminders stopped.');
+      return;
+    }
+
+    final effectiveInterval = intervalHours == 1 ? 1 : 2;
+    final notifTitle = title ?? 'Reja eslatmasi';
+
+    final firstPlan = uncompletedPlanTitles.first;
+    final otherCount = uncompletedPlanTitles.length - 1;
+
+    String body;
+    if (otherCount > 0) {
+      body = multiPlanBody != null
+          ? multiPlanBody.replaceAll('{}', firstPlan) // format with title & count
+          : 'Eslatma: "$firstPlan" va yana $otherCount ta rejangiz kutilmoqda!';
+    } else {
+      body = singlePlanBody != null
+          ? singlePlanBody.replaceAll('{}', firstPlan)
+          : 'Eslatma: "$firstPlan" rejasini bajarish vaqti keldi!';
+    }
+
+    final androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      styleInformation: BigTextStyleInformation(body),
+    );
+
+    final notificationDetails = NotificationDetails(android: androidDetails);
+    final now = tz.TZDateTime.now(tz.local);
+
+    for (int hour = 8; hour <= 22; hour += effectiveInterval) {
+      final notifId = hourlyReminderBaseId + hour;
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        0,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          notifId,
+          notifTitle,
+          body,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (_) {
+        await _notificationsPlugin.zonedSchedule(
+          notifId,
+          notifTitle,
+          body,
+          scheduledDate,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      }
+    }
+    debugPrint(
+        'Scheduled hourly plan reminders ($effectiveInterval hr step) between 08:00 and 22:00 for ${uncompletedPlanTitles.length} plan(s).');
+  }
+
+  /// Cancels all recurring hourly plan reminders
+  Future<void> cancelHourlyPlanReminders() async {
+    if (kIsWeb) return;
+    for (int hour = 8; hour <= 22; hour++) {
+      try {
+        await _notificationsPlugin.cancel(hourlyReminderBaseId + hour);
+      } catch (_) {}
+    }
+  }
 }
