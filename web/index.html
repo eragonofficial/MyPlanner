@@ -1,58 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!--
-    Uncomment the tag below to lay the app out underneath the parts of the
-    screen that the device obstructs, such as a display cutout, the rounded
-    corners of the screen, or a home indicator.
+  <!-- Primary SEO Meta Tags -->
+  <title>My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri</title>
+  <meta name="title" content="My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri">
+  <meta name="description" content="My Planner — kunlik, haftalik, oylik va yillik rejalarni boshqarish, 52 haftalik faollik xaritasi hamda tabiat ovozlari bilan boyitilgan Pomodoro ('Study With Me') fokus taymeri. O'zbek, rus, ingliz va koreys tillarida bepul onlayn rejalashtiruvchi.">
+  <meta name="keywords" content="my planner, kunlik reja, haftalik reja, oylik reja, yillik maqsadlar, pomodoro taymer, study with me, vaqtni boshqarish, ежедневник, планировщик задач, помодоро таймер, daily planner, focus timer">
+  <meta name="author" content="My Planner">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow">
+  <meta name="yandex" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://my-planner.uz/" />
 
-    Without it, the browser keeps the app clear of them, and `SafeArea` and
-    `MediaQuery.paddingOf` report no padding. With it, the app covers the whole
-    screen, and it is up to the app to keep its own content out of the way,
-    which is what `SafeArea` is for.
-  -->
-  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"> -->
+  <!-- Hreflang / Multi-language Alternates -->
+  <link rel="alternate" hreflang="uz" href="https://my-planner.uz/" />
+  <link rel="alternate" hreflang="ru" href="https://my-planner.uz/" />
+  <link rel="alternate" hreflang="en" href="https://my-planner.uz/" />
+  <link rel="alternate" hreflang="ko" href="https://my-planner.uz/" />
+  <link rel="alternate" hreflang="x-default" href="https://my-planner.uz/" />
 
-  <!-- iOS meta tags & icons -->
+  <!-- Open Graph / Facebook / Telegram / Instagram / WhatsApp -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://my-planner.uz/">
+  <meta property="og:site_name" content="My Planner">
+  <meta property="og:title" content="My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri">
+  <meta property="og:description" content="Kunlik, haftalik, oylik va yillik maqsadlar, 52 haftalik faollik xaritasi va tabiat ovozlari bilan Pomodoro fokus taymeri. 5 tilda bepul onlayn rejalashtiruvchi.">
+  <meta property="og:image" content="https://my-planner.uz/icons/Icon-512.png">
+  <meta property="og:locale" content="uz_UZ">
+  <meta property="og:locale:alternate" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://my-planner.uz/">
+  <meta name="twitter:title" content="My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri">
+  <meta name="twitter:description" content="Kunlik, haftalik, oylik va yillik rejalarni boshqarish, 52 haftalik faollik xaritasi va tabiat ovozlari bilan Pomodoro fokus taymeri.">
+  <meta name="twitter:image" content="https://my-planner.uz/icons/Icon-512.png">
+
+  <!-- iOS / PWA Meta Tags & Icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="my_planner_app">
+  <meta name="apple-mobile-web-app-title" content="My Planner">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
+  <!-- Favicon & Manifest -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>my_planner_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- JSON-LD Structured Data (SoftwareApplication / WebApplication) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": ["WebApplication", "SoftwareApplication"],
+    "name": "My Planner",
+    "alternateName": "My Planner & Pomodoro Focus Timer",
+    "url": "https://my-planner.uz/",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Web, Android",
+    "inLanguage": ["uz-Latn", "uz-Cyrl", "ru", "en", "ko"],
+    "description": "My Planner — kunlik, haftalik, oylik va yillik rejalarni boshqarish, 52 haftalik faollik xaritasi hamda tabiat ovozlari bilan boyitilgan Pomodoro ('Study With Me') fokus taymeri.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Kunlik, haftalik, oylik va yillik rejalashtirish (Daily, Weekly, Monthly, Yearly Planner)",
+      "Yillik rivojlanish dashboardi va 52 haftalik faollik xaritasi (Yearly Progress Dashboard)",
+      "Tabiat ovozlari (dengiz, yomg'ir, o'rmon, sharshara, qushlar, tog'lar, hasharotlar) bilan Pomodoro 'Study With Me' fokus taymeri",
+      "Bulutli sinxronizatsiya (Cloud Sync across Web & Android)",
+      "5 tilni qo'llab-quvvatlash (O'zbekcha Lotin/Kirill, Русский, English, 한국어)"
+    ]
+  }
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- Semantic Content for Search Engine Crawlers (Googlebot / YandexBot) -->
+  <div id="seo-content" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
+    <h1>My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri</h1>
+    <p>
+      My Planner — bu vaqtni samarali boshqarish, kunlik, haftalik, oylik va yillik maqsadlarni tizimli rejalashtirish hamda
+      Pomodoro texnikasi yordamida chuqur fokusda ishlash uchun yaratilgan zamonaviy bepul onlayn rejalashtiruvchi va mobil ilova.
+    </p>
+    <h2>Asosiy imkoniyatlar / Основные возможности / Key Features</h2>
+    <ul>
+      <li><strong>Ko'p darajali rejalashtirish:</strong> Kunlik rejalar, haftalik vazifalar, oylik maqsadlar va yillik strategik rejalar.</li>
+      <li><strong>Yillik Rivojlanish Dashboardi:</strong> 52 haftalik faollik xaritasi, bajarilish ko'rsatkichlari va uzluksiz kunlar zanjiri (streak).</li>
+      <li><strong>Pomodoro "Study With Me" Fokus Taymeri:</strong> 25/5 va 50/10 fokus sessiyalari hamda 7 xil tabiat ovozlari (dengiz, yomg'ir, o'rmon, sharshara, qushlar, tog'lar, tungi hasharotlar).</li>
+      <li><strong>Bulutli sinxronizatsiya va 5 til:</strong> Web va Android qurilmalar o'rtasida tezkor sinxronizatsiya, O'zbekcha (Lotin va Kirill), Русский, English va 한국어 tillari.</li>
+    </ul>
+    <p>
+      Планировщик задач и помодоро таймер онлайн — планируйте день, неделю, месяц и год, отслеживайте прогресс на 52-недельной карте активности и концентрируйтесь под звуки природы.
+      Manage your daily, weekly, monthly, and yearly plans, track your yearly progress heatmap, and focus deeper with our Study With Me Pomodoro timer.
+    </p>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <noscript>
+    <main style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:20px;color:#0F172A;">
+      <h1>My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri</h1>
+      <p>
+        My Planner — kunlik, haftalik, oylik va yillik rejalarni boshqarish, 52 haftalik faollik xaritasi va tabiat ovozlari bilan
+        Pomodoro fokus taymeri. Ilovadan to'liq foydalanish uchun brauzeringizda JavaScript'ni yoqing.
+      </p>
+      <h2>Asosiy bo'limlar</h2>
+      <ul>
+        <li>Kunlik, haftalik, oylik va yillik rejalar boshqaruvi</li>
+        <li>Yillik rivojlanish dashboardi va 52 haftalik faollik xaritasi</li>
+        <li>Tabiat ovozlari bilan Pomodoro fokus taymeri</li>
+        <li>Web va Android qurilmalarda bulutli sinxronizatsiya</li>
+      </ul>
+    </main>
+  </noscript>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

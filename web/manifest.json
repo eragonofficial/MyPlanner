@@ -1,11 +1,11 @@
 {
-    "name": "my_planner_app",
-    "short_name": "my_planner_app",
+    "name": "My Planner — Kunlik Rejalar va Pomodoro Taymer",
+    "short_name": "My Planner",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F172A",
+    "theme_color": "#0F172A",
+    "description": "Kunlik, haftalik, oylik va yillik rejalarni boshqarish hamda Pomodoro fokus taymeri.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
