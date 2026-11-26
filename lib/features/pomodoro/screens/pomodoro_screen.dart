@@ -3,6 +3,9 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../../shared/widgets/language_selector.dart';
+import '../../../shared/widgets/animated_aurora_background.dart';
+import '../../../shared/widgets/bouncy_button.dart';
+import '../../../shared/widgets/pulsing_badge.dart';
 import '../controllers/pomodoro_controller.dart';
 import '../models/pomodoro_state.dart';
 import '../widgets/glass_card.dart';
@@ -108,11 +111,13 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.darkBg,
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.darkNatureGradient,
-            ),
-            child: SafeArea(
+          body: AnimatedAuroraBackground(
+            intensity: 0.9,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.darkNatureGradient,
+              ),
+              child: SafeArea(
               child: Column(
                 children: [
                   // Top App Bar with Drawer button, Title, and Quick Language Toggle Pills
@@ -175,7 +180,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                       children: PomodoroTimerMode.values.map((mode) {
                                         final isSelected = controller.mode == mode;
                                         return Expanded(
-                                          child: GestureDetector(
+                                          child: BouncyButton(
                                             onTap: () => controller.setMode(mode),
                                             child: AnimatedContainer(
                                               duration: const Duration(milliseconds: 200),
@@ -187,7 +192,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                                 borderRadius: BorderRadius.circular(10),
                                                 border: isSelected
                                                     ? Border.all(
-                                                        color: AppColors.primaryGreen.withOpacity(0.5),
+                                                        color: AppColors.primaryGreen.withValues(alpha: 0.5),
                                                         width: 1,
                                                       )
                                                     : null,
@@ -223,14 +228,14 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                       children: [1, 2, 3, 4].map((count) {
                                         final isSelected = controller.targetSessions == count;
                                         return Expanded(
-                                          child: GestureDetector(
+                                          child: BouncyButton(
                                             onTap: () => controller.setTargetSessions(count),
                                             child: AnimatedContainer(
                                               duration: const Duration(milliseconds: 200),
                                               padding: const EdgeInsets.symmetric(vertical: 8),
                                               decoration: BoxDecoration(
                                                 color: isSelected
-                                                    ? AppColors.primaryGreen.withOpacity(0.2)
+                                                    ? AppColors.primaryGreen.withValues(alpha: 0.2)
                                                     : Colors.transparent,
                                                 borderRadius: BorderRadius.circular(10),
                                                 border: isSelected
@@ -295,20 +300,23 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 // Reset Button
-                                IconButton.filledTonal(
-                                  onPressed: controller.reset,
-                                  iconSize: 26,
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: AppColors.glassSurface,
-                                    foregroundColor: AppColors.textSecondary,
-                                    padding: const EdgeInsets.all(16),
+                                BouncyButton(
+                                  onTap: controller.reset,
+                                  child: IconButton.filledTonal(
+                                    onPressed: controller.reset,
+                                    iconSize: 26,
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: AppColors.glassSurface,
+                                      foregroundColor: AppColors.textSecondary,
+                                      padding: const EdgeInsets.all(16),
+                                    ),
+                                    icon: const Icon(Icons.refresh_rounded),
                                   ),
-                                  icon: const Icon(Icons.refresh_rounded),
                                 ),
                                 const SizedBox(width: 24),
 
-                                // Main Play / Pause Button
-                                GestureDetector(
+                                // Main Play / Pause Button with living pulse
+                                BouncyButton(
                                   onTap: () {
                                     if (!controller.isRunning) {
                                       controller.start();
@@ -318,45 +326,56 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                       controller.pause();
                                     }
                                   },
-                                  child: Container(
-                                    width: 76,
-                                    height: 76,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: controller.phase == PomodoroPhase.focus
-                                          ? AppColors.focusGradient
-                                          : AppColors.breakGradient,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: controller.phase.color.withOpacity(0.4),
-                                          blurRadius: 18,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      controller.isRunning && !controller.isPaused
-                                          ? Icons.pause_rounded
-                                          : Icons.play_arrow_rounded,
-                                      size: 40,
-                                      color: Colors.white,
+                                  child: PulsingBadge(
+                                    glowColor: controller.phase.color,
+                                    maxScale: 1.05,
+                                    animate: controller.isRunning && !controller.isPaused,
+                                    duration: const Duration(milliseconds: 2000),
+                                    child: Container(
+                                      width: 76,
+                                      height: 76,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: controller.phase == PomodoroPhase.focus
+                                            ? AppColors.focusGradient
+                                            : AppColors.breakGradient,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: controller.phase.color.withValues(alpha: 0.45),
+                                            blurRadius: 20,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        controller.isRunning && !controller.isPaused
+                                            ? Icons.pause_rounded
+                                            : Icons.play_arrow_rounded,
+                                        size: 40,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 24),
 
                                 // Skip / Next session button
-                                IconButton.filledTonal(
-                                  onPressed: controller.isRunning
+                                BouncyButton(
+                                  onTap: controller.isRunning
                                       ? () => controller.reset()
                                       : null,
-                                  iconSize: 26,
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: AppColors.glassSurface,
-                                    foregroundColor: AppColors.textSecondary,
-                                    padding: const EdgeInsets.all(16),
+                                  child: IconButton.filledTonal(
+                                    onPressed: controller.isRunning
+                                        ? () => controller.reset()
+                                        : null,
+                                    iconSize: 26,
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: AppColors.glassSurface,
+                                      foregroundColor: AppColors.textSecondary,
+                                      padding: const EdgeInsets.all(16),
+                                    ),
+                                    icon: const Icon(Icons.skip_next_rounded),
                                   ),
-                                  icon: const Icon(Icons.skip_next_rounded),
                                 ),
                               ],
                             ),
@@ -384,8 +403,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               ),
             ),
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 }

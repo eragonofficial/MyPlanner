@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/bouncy_button.dart';
 import '../models/note_model.dart';
 
 class PeriodTabsBar extends StatelessWidget {
@@ -31,17 +32,30 @@ class PeriodTabsBar extends StatelessWidget {
           final count = getCount(period);
 
           return Expanded(
-            child: GestureDetector(
+            child: BouncyButton(
               onTap: () => onPeriodSelected(period),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
+                curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.glassSurfaceLight : Colors.transparent,
+                  color: isSelected
+                      ? AppColors.primaryCyan.withValues(alpha: 0.15)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   border: isSelected
-                      ? Border.all(color: AppColors.primaryCyan.withOpacity(0.4), width: 1)
+                      ? Border.all(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.5),
+                          width: 1,
+                        )
+                      : null,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.18),
+                            blurRadius: 8,
+                          ),
+                        ]
                       : null,
                 ),
                 child: Row(
@@ -61,7 +75,7 @@ class PeriodTabsBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primaryCyan.withOpacity(0.2)
+                              ? AppColors.primaryCyan.withValues(alpha: 0.25)
                               : AppColors.glassSurface,
                           borderRadius: BorderRadius.circular(10),
                         ),

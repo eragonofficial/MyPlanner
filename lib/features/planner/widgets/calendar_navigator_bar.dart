@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
+import '../../../shared/widgets/bouncy_button.dart';
 import '../controllers/planner_controller.dart';
 import '../models/note_model.dart';
 
@@ -135,23 +136,36 @@ class CalendarNavigatorBar extends StatelessWidget {
                 final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
                 final weekdayName = DateFormat.E(locale).format(d); // Mon, Tue, etc. localized
 
-                return GestureDetector(
+                return BouncyButton(
                   onTap: () => controller.setSelectedDate(d),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
                     width: 46,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primaryCyan
-                          : (isToday ? AppColors.primaryCyan.withOpacity(0.12) : AppColors.glassSurface),
+                          : (isToday
+                              ? AppColors.primaryCyan.withValues(alpha: 0.15)
+                              : AppColors.glassSurface),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primaryCyan
-                            : (isToday ? AppColors.primaryCyan.withOpacity(0.5) : AppColors.glassBorder.withOpacity(0.5)),
+                            : (isToday
+                                ? AppColors.primaryCyan.withValues(alpha: 0.5)
+                                : AppColors.glassBorder.withValues(alpha: 0.5)),
                         width: isSelected ? 1.5 : 1,
                       ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primaryCyan.withValues(alpha: 0.25),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

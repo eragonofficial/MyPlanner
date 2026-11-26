@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
+import '../../../shared/widgets/bouncy_button.dart';
 import '../models/note_model.dart';
 
 class AddEditNoteDialog extends StatefulWidget {
@@ -272,14 +273,14 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
                   children: PriorityLevel.values.map((p) {
                     final selected = _selectedPriority == p;
                     return Expanded(
-                      child: GestureDetector(
+                      child: BouncyButton(
                         onTap: () => setState(() => _selectedPriority = p),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
-                            color: selected ? p.color.withOpacity(0.2) : AppColors.glassSurface,
+                            color: selected ? p.color.withValues(alpha: 0.2) : AppColors.glassSurface,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: selected ? p.color : AppColors.glassBorder,
@@ -423,39 +424,45 @@ class _AddEditNoteDialogState extends State<AddEditNoteDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Action Buttons: Cancel & Save
+                // Action Buttons: Cancel & Save with spring bounce
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
-                          side: const BorderSide(color: AppColors.glassBorder),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: BouncyButton(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textSecondary,
+                            side: const BorderSide(color: AppColors.glassBorder),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          child: Text(LocaleKeys.cancel.tr()),
                         ),
-                        child: Text(LocaleKeys.cancel.tr()),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryCyan,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: BouncyButton(
+                        onTap: _submit,
+                        child: ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryCyan,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          LocaleKeys.save.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          child: Text(
+                            LocaleKeys.save.tr(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),

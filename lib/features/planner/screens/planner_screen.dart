@@ -4,6 +4,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../shared/widgets/auth_guard_modal.dart';
+import '../../../shared/widgets/animated_aurora_background.dart';
+import '../../../shared/widgets/bouncy_button.dart';
+import '../../../shared/widgets/pulsing_badge.dart';
 import '../controllers/planner_controller.dart';
 import '../models/note_model.dart';
 import '../widgets/period_tabs_bar.dart';
@@ -318,18 +321,23 @@ class PlannerScreen extends StatelessWidget {
                     ),
                     if (uncompletedCount > 0) ...[
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentRed,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '$uncompletedCount',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      PulsingBadge(
+                        glowColor: AppColors.accentRed,
+                        maxScale: 1.12,
+                        duration: const Duration(milliseconds: 1600),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentRed,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$uncompletedCount',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -419,44 +427,51 @@ class PlannerScreen extends StatelessWidget {
                 },
               ),
               // Bulletproof Cloud Sync / Guest Status Indicator
-              GestureDetector(
+              BouncyButton(
                 onTap: isGuest
                     ? () => AuthGuardModal.show(context, onAuthSuccess: controller.syncWithCloud)
                     : () => controller.syncWithCloud(),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _getSyncBadgeBg(isGuest, controller.syncStatus),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _getSyncBadgeBorder(isGuest, controller.syncStatus),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildSyncIcon(isGuest, controller.syncStatus),
-                      const SizedBox(width: 5),
-                      Text(
-                        _getSyncBadgeText(isGuest, controller.syncStatus),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: _getSyncTextColor(isGuest, controller.syncStatus),
-                        ),
+                child: PulsingBadge(
+                  glowColor: _getSyncBadgeBorder(isGuest, controller.syncStatus),
+                  maxScale: 1.04,
+                  animate: controller.syncStatus == SyncStatus.syncing,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _getSyncBadgeBg(isGuest, controller.syncStatus),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _getSyncBadgeBorder(isGuest, controller.syncStatus),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildSyncIcon(isGuest, controller.syncStatus),
+                        const SizedBox(width: 5),
+                        Text(
+                          _getSyncBadgeText(isGuest, controller.syncStatus),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _getSyncTextColor(isGuest, controller.syncStatus),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          body: RefreshIndicator(
-            color: AppColors.primaryCyan,
-            backgroundColor: AppColors.darkBgSecondary,
-            onRefresh: controller.syncWithCloud,
-            child: CustomScrollView(
+          body: AnimatedAuroraBackground(
+            intensity: 0.75,
+            child: RefreshIndicator(
+              color: AppColors.primaryCyan,
+              backgroundColor: AppColors.darkBgSecondary,
+              onRefresh: controller.syncWithCloud,
+              child: CustomScrollView(
               slivers: [
                 // Guest Banner (when unauthenticated)
                 if (isGuest)
@@ -811,49 +826,66 @@ class PlannerScreen extends StatelessWidget {
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         final note = displayNotes[index];
-                        return NoteCard(
-                          note: note,
-                          onToggle: () {
-                            if (!_checkAuth(context)) return;
-                            controller.toggleComplete(note);
+                        final delayMs = (index * 35).clamp(0, 300);
+
+                        return TweenAnimationBuilder<double>(
+                          key: ValueKey('stagger_${note.id}'),
+                          tween: Tween<double>(begin: 0.0, end: 1.0),
+                          duration: Duration(milliseconds: 320 + delayMs),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, animVal, child) {
+                            return Transform.translate(
+                              offset: Offset(0, 18 * (1.0 - animVal)),
+                              child: Opacity(
+                                opacity: animVal.clamp(0.0, 1.0),
+                                child: child,
+                              ),
+                            );
                           },
-                          onEdit: () {
-                            if (!_checkAuth(context)) return;
-                            _showAddEditDialog(context, note);
-                          },
-                          onDelete: () {
-                            if (!_checkAuth(context)) return;
-                            _confirmDelete(context, note);
-                          },
-                          onReschedule: () async {
-                            if (!_checkAuth(context)) return;
-                            await controller.rescheduleNote(note);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: AppColors.darkBgSecondary,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  content: Row(
-                                    children: [
-                                      const Icon(Icons.check_circle_rounded,
-                                          color: AppColors.primaryGreen, size: 18),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        LocaleKeys.rescheduledSuccess.tr(),
-                                        style: const TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 13,
+                          child: NoteCard(
+                            note: note,
+                            onToggle: () {
+                              if (!_checkAuth(context)) return;
+                              controller.toggleComplete(note);
+                            },
+                            onEdit: () {
+                              if (!_checkAuth(context)) return;
+                              _showAddEditDialog(context, note);
+                            },
+                            onDelete: () {
+                              if (!_checkAuth(context)) return;
+                              _confirmDelete(context, note);
+                            },
+                            onReschedule: () async {
+                              if (!_checkAuth(context)) return;
+                              await controller.rescheduleNote(note);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: AppColors.darkBgSecondary,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle_rounded,
+                                            color: AppColors.primaryGreen, size: 18),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          LocaleKeys.rescheduledSuccess.tr(),
+                                          style: const TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 13,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }
-                          },
+                                );
+                              }
+                            },
+                          ),
                         );
                       },
                       childCount: displayNotes.length,
@@ -864,15 +896,19 @@ class PlannerScreen extends StatelessWidget {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showAddEditDialog(context),
-            backgroundColor: AppColors.primaryCyan,
-            foregroundColor: Colors.black,
-            elevation: 4,
-            icon: const Icon(Icons.add_rounded, size: 22),
-            label: Text(
-              LocaleKeys.createNewPlan.tr(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+          floatingActionButton: BouncyButton(
+            onTap: () => _showAddEditDialog(context),
+            child: FloatingActionButton.extended(
+              onPressed: () => _showAddEditDialog(context),
+              backgroundColor: AppColors.primaryCyan,
+              foregroundColor: Colors.black,
+              elevation: 4,
+              icon: const Icon(Icons.add_rounded, size: 22),
+              label: Text(
+                LocaleKeys.createNewPlan.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
             ),
           ),
         );

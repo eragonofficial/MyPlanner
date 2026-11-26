@@ -7,6 +7,7 @@ import 'widgets/aurora_particle_background.dart';
 import 'widgets/interactive_glass_card.dart';
 import 'widgets/interactive_try_live_widget.dart';
 import 'widgets/shimmer_cta_button.dart';
+import '../../../shared/widgets/pulsing_badge.dart';
 
 class LandingPage extends StatefulWidget {
   final VoidCallback onSignInPressed;
@@ -434,14 +435,19 @@ class _LandingPageState extends State<LandingPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: feature.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: feature.color.withValues(alpha: 0.35)),
+          PulsingBadge(
+            glowColor: feature.color,
+            maxScale: 1.05,
+            duration: const Duration(milliseconds: 2400),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: feature.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: feature.color.withValues(alpha: 0.35)),
+              ),
+              child: Icon(feature.icon, color: feature.color, size: 26),
             ),
-            child: Icon(feature.icon, color: feature.color, size: 26),
           ),
           const SizedBox(height: 16),
           Text(

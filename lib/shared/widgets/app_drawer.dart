@@ -9,6 +9,8 @@ import '../../features/planner/controllers/planner_controller.dart';
 import '../../features/planner/widgets/daily_reminder_settings_sheet.dart';
 import '../../../core/services/local_storage_service.dart';
 import 'language_selector.dart';
+import 'bouncy_button.dart';
+import 'pulsing_badge.dart';
 
 enum MainModule {
   planner,
@@ -258,64 +260,78 @@ class AppDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   // Expandable Tree Node: "Mening Rejalarim" (My Plans)
-                  _buildPlannerTreeNode(context),
+                  _staggerItem(0, _buildPlannerTreeNode(context)),
 
                   // Module: Pomodoro
-                  _buildNavItem(
-                    context: context,
-                    icon: Icons.timer_outlined,
-                    title: LocaleKeys.navPomodoro.tr(),
-                    isSelected: currentModule == MainModule.pomodoro,
-                    badge: isPomodoroRunning ? '●' : null,
-                    badgeColor: AppColors.primaryGreen,
-                    onTap: () {
-                      onSelectModule(MainModule.pomodoro);
-                      Navigator.of(context).pop();
-                    },
+                  _staggerItem(
+                    1,
+                    _buildNavItem(
+                      context: context,
+                      icon: Icons.timer_outlined,
+                      title: LocaleKeys.navPomodoro.tr(),
+                      isSelected: currentModule == MainModule.pomodoro,
+                      badge: isPomodoroRunning ? '●' : null,
+                      badgeColor: AppColors.primaryGreen,
+                      onTap: () {
+                        onSelectModule(MainModule.pomodoro);
+                        Navigator.of(context).pop();
+                      },
+                    ),
                   ),
 
                   // Analytics Dashboard
                   if (onOpenDashboard != null)
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.insights_rounded,
-                      title: LocaleKeys.analytics.tr(),
-                      isSelected: false,
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        onOpenDashboard!();
-                      },
+                    _staggerItem(
+                      2,
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.insights_rounded,
+                        title: LocaleKeys.analytics.tr(),
+                        isSelected: false,
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          onOpenDashboard!();
+                        },
+                      ),
                     ),
 
                   // Daily Reminder Settings Button
-                  _buildDailyReminderTile(context),
+                  _staggerItem(3, _buildDailyReminderTile(context)),
 
                   const Divider(color: AppColors.glassBorder, height: 24),
 
                   // Language Selector Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    child: Row(
+                  _staggerItem(
+                    4,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.translate_rounded,
-                          size: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          LocaleKeys.navLanguage.tr(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                            color: AppColors.textSecondary,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.translate_rounded,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                LocaleKeys.navLanguage.tr(),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        const DrawerLanguageList(),
                       ],
                     ),
                   ),
-                  const DrawerLanguageList(),
                 ],
               ),
             ),
@@ -337,19 +353,26 @@ class AppDrawer extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isCloudOnline
-                              ? AppColors.primaryGreen
-                              : AppColors.accentAmber,
+                      PulsingBadge(
+                        glowColor: isCloudOnline
+                            ? AppColors.primaryGreen
+                            : AppColors.accentAmber,
+                        maxScale: 1.25,
+                        duration: const Duration(milliseconds: 1800),
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCloudOnline
+                                ? AppColors.primaryGreen
+                                : AppColors.accentAmber,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isCloudOnline ? 'Supabase' : LocaleKeys.syncStatusOffline.tr(),
+                        isCloudOnline ? LocaleKeys.navSyncOnline.tr() : LocaleKeys.syncStatusOffline.tr(),
                         style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                       ),
                     ],
@@ -363,6 +386,24 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  Widget _staggerItem(int index, Widget child) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 220 + index * 45),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, c) {
+        return Transform.translate(
+          offset: Offset(-14 * (1.0 - value), 0),
+          child: Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: c,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
   Widget _buildDailyReminderTile(BuildContext context) {
     final storage = localStorage;
     final isEnabled = storage?.isDailyReminderEnabled() ?? false;
@@ -371,46 +412,7 @@ class AppDrawer extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        leading: Icon(
-          Icons.notifications_active_outlined,
-          color: isEnabled ? AppColors.primaryCyan : AppColors.textSecondary,
-          size: 22,
-        ),
-        title: Text(
-          LocaleKeys.dailyReminderTitle.tr(),
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: isEnabled
-                ? AppColors.primaryCyan.withValues(alpha: 0.15)
-                : AppColors.glassSurface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isEnabled
-                  ? AppColors.primaryCyan.withValues(alpha: 0.4)
-                  : AppColors.glassBorder,
-              width: 0.8,
-            ),
-          ),
-          child: Text(
-            isEnabled
-                ? '$reminderTime (${interval == 1 ? LocaleKeys.reminderEvery1Hour.tr() : LocaleKeys.reminderEvery2Hours.tr()})'
-                : LocaleKeys.taskPending.tr(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isEnabled ? AppColors.primaryCyan : AppColors.textMuted,
-            ),
-          ),
-        ),
+      child: BouncyButton(
         onTap: () async {
           Navigator.of(context).pop(); // close drawer
           final storageService = storage ?? await LocalStorageService.create();
@@ -418,6 +420,47 @@ class AppDrawer extends StatelessWidget {
             DailyReminderSettingsSheet.show(context, storageService);
           }
         },
+        child: ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          leading: Icon(
+            Icons.notifications_active_outlined,
+            color: isEnabled ? AppColors.primaryCyan : AppColors.textSecondary,
+            size: 22,
+          ),
+          title: Text(
+            LocaleKeys.dailyReminderTitle.tr(),
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: isEnabled
+                  ? AppColors.primaryCyan.withValues(alpha: 0.15)
+                  : AppColors.glassSurface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isEnabled
+                    ? AppColors.primaryCyan.withValues(alpha: 0.4)
+                    : AppColors.glassBorder,
+                width: 0.8,
+              ),
+            ),
+            child: Text(
+              isEnabled
+                  ? '$reminderTime (${interval == 1 ? LocaleKeys.reminderEvery1Hour.tr() : LocaleKeys.reminderEvery2Hours.tr()})'
+                  : LocaleKeys.taskPending.tr(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isEnabled ? AppColors.primaryCyan : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -569,10 +612,10 @@ class AppDrawer extends StatelessWidget {
 
             // Branch Item Content
             Expanded(
-              child: InkWell(
+              child: BouncyButton(
                 onTap: onTap,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
@@ -582,9 +625,33 @@ class AppDrawer extends StatelessWidget {
                     border: isSelected
                         ? Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.5), width: 1)
                         : null,
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primaryCyan.withValues(alpha: 0.18),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Row(
                     children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isSelected ? 3 : 0,
+                        height: 14,
+                        margin: EdgeInsets.only(right: isSelected ? 6 : 0),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryCyan,
+                          borderRadius: BorderRadius.circular(2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryCyan.withValues(alpha: 0.8),
+                              blurRadius: 3,
+                            ),
+                          ],
+                        ),
+                      ),
                       Icon(
                         icon,
                         size: 16,
@@ -641,46 +708,91 @@ class AppDrawer extends StatelessWidget {
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.glassSurfaceLight : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: isSelected
-            ? Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.5), width: 1)
-            : null,
-      ),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        leading: Icon(
-          icon,
-          color: isSelected ? AppColors.primaryCyan : AppColors.textSecondary,
-          size: 22,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? AppColors.primaryCyan : AppColors.textPrimary,
+      child: BouncyButton(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primaryCyan.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: isSelected
+                ? Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.5), width: 1)
+                : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.18),
+                      blurRadius: 10,
+                    ),
+                  ]
+                : null,
           ),
-        ),
-        trailing: badge != null
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: (badgeColor ?? AppColors.primaryCyan).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: badgeColor ?? AppColors.primaryCyan,
+          child: ListTile(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: isSelected ? 3.5 : 0,
+                  height: 20,
+                  margin: EdgeInsets.only(right: isSelected ? 8 : 0),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryCyan,
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.8),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                 ),
-              )
-            : null,
-        onTap: onTap,
+                Icon(
+                  icon,
+                  color: isSelected ? AppColors.primaryCyan : AppColors.textSecondary,
+                  size: 22,
+                ),
+              ],
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? AppColors.primaryCyan : AppColors.textPrimary,
+              ),
+            ),
+            trailing: badge != null
+                ? PulsingBadge(
+                    glowColor: badgeColor ?? AppColors.primaryGreen,
+                    maxScale: 1.15,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (badgeColor ?? AppColors.primaryGreen).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: (badgeColor ?? AppColors.primaryGreen).withValues(alpha: 0.6),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        badge,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor ?? AppColors.primaryGreen,
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+        ),
       ),
     );
   }

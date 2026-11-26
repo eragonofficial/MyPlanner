@@ -204,11 +204,11 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
           // Bottom Callout Bar with Shimmer CTA
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              color: AppColors.glassSurface.withValues(alpha: 0.6),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-              border: const Border(
-                top: BorderSide(color: AppColors.glassBorder, width: 0.8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF161B26),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+              border: Border(
+                top: BorderSide(color: Color(0xFF334155), width: 0.8),
               ),
             ),
             child: Row(
@@ -220,7 +220,11 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                     const SizedBox(width: 6),
                     Text(
                       LocaleKeys.landingLivePreview.tr(),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFF8FAFC),
+                      ),
                     ),
                   ],
                 ),
@@ -359,7 +363,9 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                 border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.4)),
               ),
               child: Text(
-                progress == 1.0 ? 'Completed 🎉' : 'In Progress',
+                progress == 1.0
+                    ? LocaleKeys.taskCompleted.tr()
+                    : LocaleKeys.taskPending.tr(),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -386,15 +392,23 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: isDone
-                        ? AppColors.glassSurface.withValues(alpha: 0.4)
-                        : AppColors.glassSurface,
+                        ? AppColors.completedBgDark
+                        : const Color(0xFF1E293B),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isDone
-                          ? AppColors.primaryGreen.withValues(alpha: 0.4)
-                          : AppColors.glassBorder,
-                      width: 1,
+                          ? AppColors.primaryGreen.withValues(alpha: 0.6)
+                          : const Color(0xFF334155),
+                      width: 1.2,
                     ),
+                    boxShadow: isDone
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                              blurRadius: 10,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -406,7 +420,7 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                           shape: BoxShape.circle,
                           color: isDone ? AppColors.primaryGreen : Colors.transparent,
                           border: Border.all(
-                            color: isDone ? AppColors.primaryGreen : AppColors.textSecondary,
+                            color: isDone ? AppColors.primaryGreen : const Color(0xFF94A3B8),
                             width: 1.8,
                           ),
                         ),
@@ -420,17 +434,19 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                           tasks[i],
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: isDone ? AppColors.textMuted : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            color: isDone ? const Color(0xFFF8FAFC) : AppColors.textPrimary,
                             decoration: isDone ? TextDecoration.lineThrough : null,
-                            decorationColor: AppColors.textMuted,
+                            decorationColor: const Color(0xFF94A3B8),
                           ),
                         ),
                       ),
                       Icon(
                         Icons.drag_indicator_rounded,
                         size: 16,
-                        color: AppColors.textMuted.withValues(alpha: 0.4),
+                        color: isDone
+                            ? AppColors.primaryGreen.withValues(alpha: 0.7)
+                            : const Color(0xFF94A3B8),
                       ),
                     ],
                   ),

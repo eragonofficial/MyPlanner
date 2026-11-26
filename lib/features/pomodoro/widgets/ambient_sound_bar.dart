@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
+import '../../../shared/widgets/bouncy_button.dart';
 import '../models/pomodoro_state.dart';
 import 'glass_card.dart';
 
@@ -63,7 +65,7 @@ class AmbientSoundBar extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withOpacity(0.2),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.primaryGreen, width: 0.8),
                       ),
@@ -141,15 +143,14 @@ class AmbientSoundBar extends StatelessWidget {
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
+                  child: BouncyButton(
                     onTap: () => onToggleSound(sound),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primaryGreen.withOpacity(0.2)
+                            ? AppColors.primaryGreen.withValues(alpha: 0.2)
                             : AppColors.glassSurface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
@@ -161,7 +162,7 @@ class AmbientSoundBar extends StatelessWidget {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primaryGreen.withOpacity(0.25),
+                                  color: AppColors.primaryGreen.withValues(alpha: 0.25),
                                   blurRadius: 8,
                                   spreadRadius: 1,
                                 ),
@@ -193,8 +194,8 @@ class AmbientSoundBar extends StatelessWidget {
                             const SizedBox(width: 6),
                             if (isBuffering)
                               const SizedBox(
-                                width: 8,
-                                height: 8,
+                                width: 10,
+                                height: 10,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 1.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -202,17 +203,17 @@ class AmbientSoundBar extends StatelessWidget {
                                   ),
                                 ),
                               )
-                            else
+                            else if (isPaused)
                               Container(
                                 width: 6,
                                 height: 6,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isPaused
-                                      ? Colors.amber
-                                      : AppColors.primaryGreen,
+                                  color: Colors.amber,
                                 ),
-                              ),
+                              )
+                            else
+                              const _MiniEqualizerBars(),
                           ],
                         ],
                       ),
@@ -221,6 +222,79 @@ class AmbientSoundBar extends StatelessWidget {
                 );
               }).toList(),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A lightweight, continuous animated 3-bar sound equalizer widget
+class _MiniEqualizerBars extends StatefulWidget {
+  const _MiniEqualizerBars();
+
+  @override
+  State<_MiniEqualizerBars> createState() => _MiniEqualizerBarsState();
+}
+
+class _MiniEqualizerBarsState extends State<_MiniEqualizerBars>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animController,
+      builder: (context, _) {
+        final val = _animController.value;
+        // Sine wave calculations for 3 staggered bars
+        final bar1Height = 4.0 + 8.0 * (0.5 + 0.5 * math.sin(val * 2 * math.pi));
+        final bar2Height = 4.0 + 9.0 * (0.5 + 0.5 * math.sin((val + 0.33) * 2 * math.pi));
+        final bar3Height = 4.0 + 7.0 * (0.5 + 0.5 * math.sin((val + 0.66) * 2 * math.pi));
+
+        return SizedBox(
+          width: 14,
+          height: 14,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildBar(bar1Height),
+              _buildBar(bar2Height),
+              _buildBar(bar3Height),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBar(double height) {
+    return Container(
+      width: 2.5,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.primaryGreen,
+        borderRadius: BorderRadius.circular(1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryGreen.withValues(alpha: 0.4),
+            blurRadius: 2,
           ),
         ],
       ),

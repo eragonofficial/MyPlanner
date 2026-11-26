@@ -79,7 +79,9 @@ class MyPlannerApp extends StatelessWidget {
     return MaterialApp(
       title: LocaleKeys.appName.tr(),
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

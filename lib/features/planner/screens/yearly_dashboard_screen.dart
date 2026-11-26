@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
+import '../../../shared/widgets/animated_aurora_background.dart';
+import '../../../shared/widgets/pulsing_badge.dart';
 import '../controllers/planner_controller.dart';
 import '../models/note_model.dart';
 
@@ -100,39 +102,42 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Year Selector Bar with Leap Year indicator
-              _buildYearSelector(isLeap: isLeap, daysInYear: daysInYear),
+      body: AnimatedAuroraBackground(
+        intensity: 0.85,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Year Selector Bar with Leap Year indicator
+                _buildYearSelector(isLeap: isLeap, daysInYear: daysInYear),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // 365/366-Day Completion Overview Card
-              _buildOverviewCard(
-                completed: completedYearTasks,
-                total: totalYearTasks,
-                percentage: completionRate,
-                streak: streak,
-                daysInYear: daysInYear,
-              ),
+                // 365/366-Day Completion Overview Card
+                _buildOverviewCard(
+                  completed: completedYearTasks,
+                  total: totalYearTasks,
+                  percentage: completionRate,
+                  streak: streak,
+                  daysInYear: daysInYear,
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Period Breakdown Cards (Daily, Weekly, Monthly, Yearly)
-              _buildPeriodBreakdown(yearNotes),
+                // Period Breakdown Cards (Daily, Weekly, Monthly, Yearly)
+                _buildPeriodBreakdown(yearNotes),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // 365/366-Day Activity Heatmap Grid
-              _buildHeatmapSection(completionMap, daysInYear),
+                // 365/366-Day Activity Heatmap Grid
+                _buildHeatmapSection(completionMap, daysInYear),
 
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),
@@ -279,27 +284,33 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
                   color: AppColors.textSecondary,
                 ),
               ),
-              // Active streak badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentAmber.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentAmber.withValues(alpha: 0.4)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.local_fire_department_rounded, size: 16, color: AppColors.accentAmber),
-                    const SizedBox(width: 4),
-                    Text(
-                      LocaleKeys.streakDays.tr(args: ['$streak']),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.accentAmber,
+              // Active streak badge with living flame pulse
+              PulsingBadge(
+                glowColor: AppColors.accentAmber,
+                maxScale: 1.06,
+                animate: streak > 0,
+                duration: const Duration(milliseconds: 2000),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentAmber.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.accentAmber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.local_fire_department_rounded, size: 16, color: AppColors.accentAmber),
+                      const SizedBox(width: 4),
+                      Text(
+                        LocaleKeys.streakDays.tr(args: ['$streak']),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accentAmber,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -307,29 +318,37 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              // Circular Percentage ring
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 76,
-                    height: 76,
-                    child: CircularProgressIndicator(
-                      value: total > 0 ? (completed / total) : 0.0,
-                      strokeWidth: 7,
-                      backgroundColor: AppColors.glassSurface,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-                    ),
-                  ),
-                  Text(
-                    '$percentage%',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
+              // Circular Percentage ring with animated counter
+              TweenAnimationBuilder<double>(
+                key: ValueKey('overview_ring_${_selectedYear}_${percentage}_$completed'),
+                tween: Tween<double>(begin: 0.0, end: total > 0 ? (completed / total) : 0.0),
+                duration: const Duration(milliseconds: 900),
+                curve: Curves.easeOutCubic,
+                builder: (context, animVal, _) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 76,
+                        height: 76,
+                        child: CircularProgressIndicator(
+                          value: animVal,
+                          strokeWidth: 7,
+                          backgroundColor: AppColors.glassSurface,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+                        ),
+                      ),
+                      Text(
+                        '${(animVal * 100).toInt()}%',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(width: 20),
               // Metrics
@@ -410,46 +429,54 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.glassBorder, width: 0.8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey('breakdown_${_selectedYear}_${period.name}_$percent'),
+        tween: Tween<double>(begin: 0.0, end: rate),
+        duration: const Duration(milliseconds: 750),
+        curve: Curves.easeOutCubic,
+        builder: (context, animRate, _) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                period.labelKey.tr(),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    period.labelKey.tr(),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '${(animRate * 100).toInt()}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryCyan,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: animRate,
+                  minHeight: 5,
+                  backgroundColor: AppColors.glassSurface,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryCyan),
                 ),
               ),
+              const SizedBox(height: 6),
               Text(
-                '$percent%',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryCyan,
-                ),
+                '$completed / $total',
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: rate,
-              minHeight: 5,
-              backgroundColor: AppColors.glassSurface,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryCyan),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '$completed / $total',
-            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -607,34 +634,38 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
                               final isSelected = _selectedHeatmapDate == date;
                               final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
 
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedHeatmapDate = date;
-                                    _selectedHeatmapCount = count;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  width: 14,
-                                  height: 14,
-                                  margin: const EdgeInsets.all(1.5),
-                                  decoration: BoxDecoration(
-                                    color: _getHeatmapColor(count),
-                                    borderRadius: BorderRadius.circular(3),
-                                    border: isSelected
-                                        ? Border.all(color: Colors.white, width: 1.5)
-                                        : (isToday
-                                            ? Border.all(color: AppColors.primaryCyan, width: 1.2)
-                                            : Border.all(color: AppColors.glassBorder.withValues(alpha: 0.25), width: 0.5)),
-                                    boxShadow: isToday
-                                        ? [
-                                            BoxShadow(
-                                              color: AppColors.primaryCyan.withValues(alpha: 0.4),
-                                              blurRadius: 4,
-                                            ),
-                                          ]
-                                        : null,
+                              return Tooltip(
+                                message: '${DateFormat.yMMMd(locale).format(date)}: $count',
+                                waitDuration: const Duration(milliseconds: 200),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedHeatmapDate = date;
+                                      _selectedHeatmapCount = count;
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    width: 14,
+                                    height: 14,
+                                    margin: const EdgeInsets.all(1.5),
+                                    decoration: BoxDecoration(
+                                      color: _getHeatmapColor(count),
+                                      borderRadius: BorderRadius.circular(3),
+                                      border: isSelected
+                                          ? Border.all(color: Colors.white, width: 1.5)
+                                          : (isToday
+                                              ? Border.all(color: AppColors.primaryCyan, width: 1.2)
+                                              : Border.all(color: AppColors.glassBorder.withValues(alpha: 0.25), width: 0.5)),
+                                      boxShadow: isToday
+                                          ? [
+                                              BoxShadow(
+                                                color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                                                blurRadius: 4,
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
                                   ),
                                 ),
                               );
@@ -654,11 +685,11 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
           // Tapped cell details banner
           if (_selectedHeatmapDate != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.glassBorder),
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
@@ -670,7 +701,11 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
                         '$_selectedHeatmapCount',
                         DateFormat.yMMMd(locale).format(_selectedHeatmapDate!),
                       ]),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                 ],
