@@ -1,5 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://my-planner.uz/sitemap.xml
-Host: https://my-planner.uz
