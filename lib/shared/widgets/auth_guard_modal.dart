@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../features/auth/screens/auth_screen.dart';
 import '../../features/auth/widgets/telegram_otp_dialog.dart';
+import 'app_brand_logo.dart';
 
 class AuthGuardModal extends StatelessWidget {
   final VoidCallback? onAuthSuccess;
@@ -47,29 +48,8 @@ class AuthGuardModal extends StatelessWidget {
                 ),
               ),
 
-              // Glowing Lock/User Icon
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryCyan, AppColors.primaryGreen],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.35),
-                      blurRadius: 18,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.lock_outline_rounded,
-                  color: Colors.black,
-                  size: 32,
-                ),
-              ),
+              // Official Brand Logo
+              const AppBrandLogo(size: 64),
               const SizedBox(height: 20),
 
               // Title

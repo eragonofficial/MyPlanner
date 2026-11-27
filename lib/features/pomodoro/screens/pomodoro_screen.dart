@@ -6,6 +6,7 @@ import '../../../shared/widgets/language_dropdown_button.dart';
 import '../../../shared/widgets/animated_aurora_background.dart';
 import '../../../shared/widgets/bouncy_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../controllers/pomodoro_controller.dart';
 import '../models/pomodoro_state.dart';
 import '../widgets/glass_card.dart';
@@ -132,6 +133,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                               icon: const Icon(Icons.menu_rounded, size: 26),
                               onPressed: widget.onOpenDrawer,
                             ),
+                            const AppBrandLogo(size: 30),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -51,8 +51,15 @@ class TelegramSignInButton extends StatelessWidget {
 /// Opens `@my_planner_uz_bot` in Telegram and shows a 6-digit OTP verification dialog.
 class TelegramOtpDialog extends StatefulWidget {
   final VoidCallback? onAuthSuccess;
+  final Future<void> Function(String code)? onVerifyCode;
+  final String? customTitle;
 
-  const TelegramOtpDialog({super.key, this.onAuthSuccess});
+  const TelegramOtpDialog({
+    super.key,
+    this.onAuthSuccess,
+    this.onVerifyCode,
+    this.customTitle,
+  });
 
   static Future<void> _openTelegramBot() async {
     final uri = Uri.parse(SupabaseConstants.telegramBotUrl);
@@ -66,6 +73,8 @@ class TelegramOtpDialog extends StatefulWidget {
   static Future<bool?> launchAndShow(
     BuildContext context, {
     VoidCallback? onAuthSuccess,
+    Future<void> Function(String code)? onVerifyCode,
+    String? customTitle,
   }) async {
     // Trigger launch immediately inside the user's tap gesture
     _openTelegramBot();
@@ -74,7 +83,11 @@ class TelegramOtpDialog extends StatefulWidget {
     return showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => TelegramOtpDialog(onAuthSuccess: onAuthSuccess),
+      builder: (_) => TelegramOtpDialog(
+        onAuthSuccess: onAuthSuccess,
+        onVerifyCode: onVerifyCode,
+        customTitle: customTitle,
+      ),
     );
   }
 
@@ -106,7 +119,11 @@ class _TelegramOtpDialogState extends State<TelegramOtpDialog> {
     });
 
     try {
-      await SupabaseService.verifyTelegramOtp(code: code);
+      if (widget.onVerifyCode != null) {
+        await widget.onVerifyCode!(code);
+      } else {
+        await SupabaseService.verifyTelegramOtp(code: code);
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
       widget.onAuthSuccess?.call();
@@ -177,7 +194,7 @@ class _TelegramOtpDialogState extends State<TelegramOtpDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      LocaleKeys.telegramOtpTitle.tr(),
+                      widget.customTitle ?? LocaleKeys.telegramOtpTitle.tr(),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

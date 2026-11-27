@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../widgets/telegram_otp_dialog.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -174,27 +175,10 @@ class _AuthScreenState extends State<AuthScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              // Header logo & title
-              Center(
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primaryCyan, AppColors.primaryGreen],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primaryCyan.withValues(alpha: 0.35),
-                        blurRadius: 14,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.cloud_sync_rounded, color: Colors.black, size: 32),
+                // Header logo & title
+                const Center(
+                  child: AppBrandLogo(size: 64),
                 ),
-              ),
               const SizedBox(height: 14),
               Text(
                 LocaleKeys.authSubtitle.tr(),

@@ -262,5 +262,19 @@
   "telegram_otp_title": "Telegram orqali kirish",
   "telegram_otp_subtitle": "1. @my_planner_uz_bot botiga kiring va Start bosing.\n2. Bot yuborgan 6 xonali kodni quyiga kiriting:",
   "telegram_open_bot": "Telegram botni ochish (@my_planner_uz_bot)",
-  "telegram_otp_invalid": "Kod noto'g'ri yoki muddati tugagan. Botdan yangi kod oling."
+  "telegram_otp_invalid": "Kod noto'g'ri yoki muddati tugagan. Botdan yangi kod oling.",
+
+  "profile_settings_title": "Profil va hisob sozlamalari",
+  "profile_full_name": "To'liq ism",
+  "profile_full_name_hint": "Ism va familiyangizni kiriting",
+  "profile_phone_number": "Telefon raqami",
+  "profile_phone_hint": "+998901234567",
+  "profile_phone_helper": "Hisoblarni (Email/Google va Telegram) o'zaro bog'lash uchun telefon raqamingizni saqlang.",
+  "profile_phone_invalid": "Telefon raqamini +998901234567 formatida kiriting",
+  "profile_telegram_status": "Telegram holati",
+  "profile_telegram_linked": "Ulangan",
+  "profile_telegram_not_linked": "Ulanmagan",
+  "profile_link_telegram_btn": "Telegram hisobni ulash",
+  "profile_saved_success": "Profil ma'lumotlari muvaffaqiyatli saqlandi!",
+  "profile_telegram_linked_success": "Telegram hisobingiz muvaffaqiyatli ulandi!"
 }

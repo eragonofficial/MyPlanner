@@ -262,5 +262,19 @@
   "telegram_otp_title": "Вход через Telegram",
   "telegram_otp_subtitle": "1. Откройте бота @my_planner_uz_bot и нажмите Start.\n2. Введите полученный 6-значный код ниже:",
   "telegram_open_bot": "Открыть Telegram-бота (@my_planner_uz_bot)",
-  "telegram_otp_invalid": "Неверный или просроченный код. Получите новый код в боте."
+  "telegram_otp_invalid": "Неверный или просроченный код. Получите новый код в боте.",
+
+  "profile_settings_title": "Настройки профиля и аккаунта",
+  "profile_full_name": "Полное имя",
+  "profile_full_name_hint": "Введите ваше имя и фамилию",
+  "profile_phone_number": "Номер телефона",
+  "profile_phone_hint": "+998901234567",
+  "profile_phone_helper": "Сохраните номер телефона, чтобы связать аккаунты Email/Google и Telegram.",
+  "profile_phone_invalid": "Введите номер в формате +998901234567",
+  "profile_telegram_status": "Статус Telegram",
+  "profile_telegram_linked": "Подключен",
+  "profile_telegram_not_linked": "Не подключен",
+  "profile_link_telegram_btn": "Привязать аккаунт Telegram",
+  "profile_saved_success": "Данные профиля успешно сохранены!",
+  "profile_telegram_linked_success": "Ваш аккаунт Telegram успешно привязан!"
 }

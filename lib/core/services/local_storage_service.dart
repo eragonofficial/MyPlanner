@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalStorageService {
   static const String _keyNotesPrefix = 'cached_notes_user_';
   static const String _keyPendingMutationsPrefix = 'pending_mutations_';
+  static const String _keyUserProfilePrefix = 'cached_user_profile_';
 
   static const String _keyLastSync = 'last_sync_timestamp';
   static const String _keyActivePeriod = 'active_period_type';
@@ -136,5 +137,32 @@ class LocalStorageService {
 
   int getReminderIntervalHours() {
     return _prefs.getInt(_keyReminderIntervalHours) ?? 2;
+  }
+
+  // User Profile Offline Cache
+  Future<bool> saveUserProfile(
+    Map<String, dynamic> profileJson, {
+    required String userId,
+  }) async {
+    if (userId.isEmpty) return false;
+    return await _prefs.setString(
+      '$_keyUserProfilePrefix$userId',
+      jsonEncode(profileJson),
+    );
+  }
+
+  Map<String, dynamic>? getUserProfile({required String userId}) {
+    if (userId.isEmpty) return null;
+    final raw = _prefs.getString('$_keyUserProfilePrefix$userId');
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 }

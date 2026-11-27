@@ -262,5 +262,19 @@
   "telegram_otp_title": "Telegram орқали кириш",
   "telegram_otp_subtitle": "1. @my_planner_uz_bot ботига киринг ва Start босинг.\n2. Бот юборган 6 хонали кодни қуйига киритинг:",
   "telegram_open_bot": "Telegram ботни очиш (@my_planner_uz_bot)",
-  "telegram_otp_invalid": "Код нотўғри ёки муддати тугаган. Ботдан янги код олинг."
+  "telegram_otp_invalid": "Код нотўғри ёки муддати тугаган. Ботдан янги код олинг.",
+
+  "profile_settings_title": "Профиль ва ҳисоб созламалари",
+  "profile_full_name": "Тўлиқ исм",
+  "profile_full_name_hint": "Исм ва фамилиянгизни киритинг",
+  "profile_phone_number": "Телефон рақами",
+  "profile_phone_hint": "+998901234567",
+  "profile_phone_helper": "Ҳисобларни (Email/Google ва Telegram) ўзаро боғлаш учун телефон рақамингизни сақланг.",
+  "profile_phone_invalid": "Телефон рақамини +998901234567 форматида киритинг",
+  "profile_telegram_status": "Telegram ҳолати",
+  "profile_telegram_linked": "Уланган",
+  "profile_telegram_not_linked": "Уланмаган",
+  "profile_link_telegram_btn": "Telegram ҳисобни улаш",
+  "profile_saved_success": "Профиль маълумотлари муваффақиятли сақланди!",
+  "profile_telegram_linked_success": "Telegram ҳисобингиз муваффақиятли уланди!"
 }

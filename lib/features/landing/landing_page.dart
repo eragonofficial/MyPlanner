@@ -8,6 +8,7 @@ import 'widgets/interactive_try_live_widget.dart';
 import 'widgets/shimmer_cta_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
 import '../../../shared/widgets/language_dropdown_button.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../feedback/widgets/feedback_dialog.dart';
 
 class LandingPage extends StatefulWidget {
@@ -153,25 +154,8 @@ class _LandingPageState extends State<LandingPage>
           constraints: const BoxConstraints(maxWidth: 1080),
           child: Row(
             children: [
-              // Brand Logo & Title with Gradient Aura
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryCyan, AppColors.primaryGreen],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.timer_rounded, color: Colors.black, size: 20),
-              ),
+              // Brand Logo & Title
+              const AppBrandLogo(size: 36),
               const SizedBox(width: 12),
               Text(
                 LocaleKeys.appName.tr(),
@@ -718,17 +702,7 @@ class _LandingPageState extends State<LandingPage>
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryCyan, AppColors.primaryGreen],
-                ),
-              ),
-              child: const Icon(Icons.timer_rounded, color: Colors.black, size: 17),
-            ),
+            const AppBrandLogo(size: 32),
             const SizedBox(width: 10),
             Text(
               LocaleKeys.appName.tr(),

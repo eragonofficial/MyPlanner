@@ -262,5 +262,19 @@
   "telegram_otp_title": "Telegram으로 로그인",
   "telegram_otp_subtitle": "1. 텔레그램에서 @my_planner_uz_bot 을 열고 Start를 누르세요.\n2. 봇이 보낸 6자리 코드를 아래에 입력하세요:",
   "telegram_open_bot": "Telegram 봇 열기 (@my_planner_uz_bot)",
-  "telegram_otp_invalid": "잘못되었거나 만료된 코드입니다. 봇에서 새 코드를 받으세요."
+  "telegram_otp_invalid": "잘못되었거나 만료된 코드입니다. 봇에서 새 코드를 받으세요.",
+
+  "profile_settings_title": "프로필 및 계정 설정",
+  "profile_full_name": "이름 (성명)",
+  "profile_full_name_hint": "이름을 입력하세요",
+  "profile_phone_number": "전화번호",
+  "profile_phone_hint": "+998901234567",
+  "profile_phone_helper": "이메일/Google 계정과 Telegram 로그인을 연동하려면 전화번호를 저장하세요.",
+  "profile_phone_invalid": "전화번호를 +998901234567 형식으로 입력하세요",
+  "profile_telegram_status": "Telegram 연동 상태",
+  "profile_telegram_linked": "연동됨",
+  "profile_telegram_not_linked": "미연동",
+  "profile_link_telegram_btn": "Telegram 계정 연동하기",
+  "profile_saved_success": "프로필 설정이 성공적으로 저장되었습니다!",
+  "profile_telegram_linked_success": "Telegram 계정이 성공적으로 연동되었습니다!"
 }

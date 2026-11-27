@@ -279,4 +279,19 @@ class LocaleKeys {
   static const String telegramOtpSubtitle = 'telegram_otp_subtitle';
   static const String telegramOpenBot = 'telegram_open_bot';
   static const String telegramOtpInvalid = 'telegram_otp_invalid';
+
+  // User Profile & Account Linking
+  static const String profileSettingsTitle = 'profile_settings_title';
+  static const String profileFullName = 'profile_full_name';
+  static const String profileFullNameHint = 'profile_full_name_hint';
+  static const String profilePhoneNumber = 'profile_phone_number';
+  static const String profilePhoneHint = 'profile_phone_hint';
+  static const String profilePhoneHelper = 'profile_phone_helper';
+  static const String profilePhoneInvalid = 'profile_phone_invalid';
+  static const String profileTelegramStatus = 'profile_telegram_status';
+  static const String profileTelegramLinked = 'profile_telegram_linked';
+  static const String profileTelegramNotLinked = 'profile_telegram_not_linked';
+  static const String profileLinkTelegramBtn = 'profile_link_telegram_btn';
+  static const String profileSavedSuccess = 'profile_saved_success';
+  static const String profileTelegramLinkedSuccess = 'profile_telegram_linked_success';
 }

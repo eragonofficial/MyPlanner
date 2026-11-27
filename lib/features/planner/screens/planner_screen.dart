@@ -9,6 +9,7 @@ import '../../../shared/widgets/animated_aurora_background.dart';
 import '../../../shared/widgets/bouncy_button.dart';
 import '../../../shared/widgets/pulsing_badge.dart';
 import '../../../shared/widgets/language_dropdown_button.dart';
+import '../../../shared/widgets/app_brand_logo.dart';
 import '../controllers/planner_controller.dart';
 import '../models/note_model.dart';
 import '../widgets/period_tabs_bar.dart';
@@ -17,6 +18,7 @@ import '../widgets/note_card.dart';
 import '../widgets/add_edit_note_dialog.dart';
 import 'yearly_dashboard_screen.dart';
 import '../../feedback/widgets/feedback_dialog.dart';
+import '../../profile/widgets/profile_settings_dialog.dart';
 
 class PlannerScreen extends StatelessWidget {
   final PlannerController controller;
@@ -483,10 +485,19 @@ class PlannerScreen extends StatelessWidget {
               icon: const Icon(Icons.menu_rounded, size: 26),
               onPressed: onOpenDrawer,
             ),
-            title: Text(
-              LocaleKeys.plannerTitle.tr(), // "Mening Rejalarim" / "My Plans"
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
-              overflow: TextOverflow.ellipsis,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppBrandLogo(size: 28),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    LocaleKeys.plannerTitle.tr(), // "Mening Rejalarim" / "My Plans"
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
             actions: [
               // Language Selector Dropdown on Workspace Top Bar (Web & Wide Viewports)
@@ -517,6 +528,23 @@ class PlannerScreen extends StatelessWidget {
                   icon: const Icon(Icons.rate_review_outlined, color: AppColors.textSecondary, size: 21),
                   tooltip: LocaleKeys.feedbackTitle.tr(),
                   onPressed: () => FeedbackDialog.show(context),
+                ),
+              // Profile & Account Settings shortcut button on Web / wide viewports
+              if (kIsWeb || MediaQuery.sizeOf(context).width >= 560)
+                IconButton(
+                  icon: const Icon(
+                    Icons.manage_accounts_rounded,
+                    color: AppColors.primaryCyan,
+                    size: 22,
+                  ),
+                  tooltip: LocaleKeys.profileSettingsTitle.tr(),
+                  onPressed: () {
+                    if (!_checkAuth(context)) return;
+                    ProfileSettingsDialog.show(
+                      context,
+                      onProfileUpdated: controller.syncWithCloud,
+                    );
+                  },
                 ),
               // Bulletproof Cloud Sync / Guest Status Indicator
               BouncyButton(

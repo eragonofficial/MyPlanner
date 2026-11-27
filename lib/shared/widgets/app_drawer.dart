@@ -11,7 +11,9 @@ import '../../../core/services/local_storage_service.dart';
 import 'language_dropdown_button.dart';
 import 'bouncy_button.dart';
 import 'pulsing_badge.dart';
+import 'app_brand_logo.dart';
 import '../../features/feedback/widgets/feedback_dialog.dart';
+import '../../features/profile/widgets/profile_settings_dialog.dart';
 
 enum MainModule {
   planner,
@@ -119,65 +121,72 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: isLoggedIn
-                                ? [AppColors.primaryGreen, AppColors.primaryCyan]
-                                : [AppColors.primaryCyan, AppColors.accentIndigo],
+                  InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      if (isLoggedIn) {
+                        final rootCtx = Navigator.of(context).context;
+                        Navigator.of(context).pop();
+                        ProfileSettingsDialog.show(
+                          rootCtx,
+                          localStorage: localStorage,
+                          onProfileUpdated: onAuthChanged,
+                        );
+                      } else {
+                        _openAuthScreen(context);
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                      child: Row(
+                        children: [
+                          const AppBrandLogo(size: 44),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isLoggedIn
+                                      ? (displayName ?? LocaleKeys.appName.tr())
+                                      : LocaleKeys.guestUser.tr(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isLoggedIn
+                                      ? LocaleKeys.profileSettingsTitle.tr()
+                                      : LocaleKeys.navSyncOffline.tr(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isLoggedIn
+                                        ? AppColors.primaryCyan
+                                        : AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isLoggedIn ? AppColors.primaryGreen : AppColors.primaryCyan)
-                                  .withValues(alpha: 0.3),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isLoggedIn ? Icons.person_rounded : Icons.person_outline_rounded,
-                          color: Colors.black,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isLoggedIn
-                                  ? (displayName ?? LocaleKeys.appName.tr())
-                                  : LocaleKeys.guestUser.tr(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                          if (isLoggedIn)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.edit_outlined,
+                                size: 17,
+                                color: AppColors.primaryCyan,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              isLoggedIn
-                                  ? LocaleKeys.navSyncOnline.tr()
-                                  : LocaleKeys.navSyncOffline.tr(),
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isLoggedIn
-                                    ? AppColors.primaryGreen
-                                    : AppColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 12),
 
