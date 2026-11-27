@@ -37,7 +37,11 @@ class PlannerController extends ChangeNotifier {
     _initCalendarDate();
     _loadInitialNotes();
     _startMidnightTimer();
-    syncWithCloud();
+    // Defer network sync & notification rescheduling until after the first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _rescheduleActiveReminders();
+      syncWithCloud();
+    });
   }
 
   void _initCalendarDate() {
@@ -68,7 +72,6 @@ class PlannerController extends ChangeNotifier {
 
   void _loadInitialNotes() {
     _notes = _repository.loadInitialNotes();
-    _rescheduleActiveReminders();
   }
 
   PlannerRepository get repository => _repository;

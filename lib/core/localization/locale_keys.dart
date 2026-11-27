@@ -256,4 +256,27 @@ class LocaleKeys {
   static const String feedbackErrorEmpty = 'feedback_error_empty';
   static const String feedbackErrorEmail = 'feedback_error_email';
   static const String feedbackSender = 'feedback_sender';
+
+  // Landing Guest Trial & Footer
+  static const String trialLimitTitle = 'trial_limit_title';
+  static const String trialLimitMsg = 'trial_limit_msg';
+  static const String trialLimitCta = 'trial_limit_cta';
+  static const String trialBadgeAvailable = 'trial_badge_available';
+  static const String footerTagline = 'footer_tagline';
+  static const String footerQuickLinks = 'footer_quick_links';
+  static const String footerFeatures = 'footer_features';
+  static const String footerPrivacy = 'footer_privacy';
+  static const String footerPrivacyDesc = 'footer_privacy_desc';
+  static const String footerContactTitle = 'footer_contact_title';
+  static const String footerTelegramSupport = 'footer_telegram_support';
+  static const String footerEmailContact = 'footer_email_contact';
+  static const String footerCreatedBy = 'footer_created_by';
+  static const String footerRights = 'footer_rights';
+
+  // Telegram OTP Authentication
+  static const String authTelegramButton = 'auth_telegram_button';
+  static const String telegramOtpTitle = 'telegram_otp_title';
+  static const String telegramOtpSubtitle = 'telegram_otp_subtitle';
+  static const String telegramOpenBot = 'telegram_open_bot';
+  static const String telegramOtpInvalid = 'telegram_otp_invalid';
 }

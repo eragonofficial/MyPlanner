@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../../core/services/supabase_service.dart';
+import '../widgets/telegram_otp_dialog.dart';
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback? onAuthSuccess;
@@ -167,9 +168,12 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
               // Header logo & title
               Center(
                 child: Container(
@@ -263,6 +267,19 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
 
+              const SizedBox(height: 12),
+
+              // Continue with Telegram OTP Button
+              TelegramSignInButton(
+                isLoading: _isLoading,
+                onPressed: () {
+                  TelegramOtpDialog.launchAndShow(
+                    context,
+                    onAuthSuccess: () => _onSuccess(LocaleKeys.signInSuccess.tr()),
+                  );
+                },
+              ),
+
               const SizedBox(height: 18),
 
               // Divider "or continue with"
@@ -287,6 +304,8 @@ class _AuthScreenState extends State<AuthScreen> {
 
               const SizedBox(height: 16),
             ],
+          ),
+            ),
           ),
         ),
       ),

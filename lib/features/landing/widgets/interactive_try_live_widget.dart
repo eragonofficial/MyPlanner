@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/localization/locale_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/localization/locale_keys.dart';
+import '../../../core/services/audio_player_service.dart';
+import '../../pomodoro/models/pomodoro_state.dart';
 
 /// A live interactive mini-sandbox where visitors can check off sample tasks,
-/// watch animated progress rings, and test Pomodoro timer rings before signing in.
+/// watch animated progress rings, and test Pomodoro timer with ambient audio
+/// (1-time guest trial) before signing in.
 class InteractiveTryLiveWidget extends StatefulWidget {
   final VoidCallback onStartPlanning;
 
@@ -17,26 +21,22 @@ class InteractiveTryLiveWidget extends StatefulWidget {
 
 class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
     with SingleTickerProviderStateMixin {
+  static const String _keyGuestTrialUsed = 'landing_pomodoro_guest_trial_used';
+  static const String _keyGuestTrialStarted = 'landing_pomodoro_guest_trial_started';
+
   int _activeTab = 0; // 0 = Planner, 1 = Pomodoro
 
   // Planner state
   final List<bool> _taskStates = [true, false, false];
 
-  // Pomodoro state
+  // Pomodoro & Audio state
+  final AudioPlayerService _audioService = AudioPlayerService();
   bool _isTimerRunning = false;
+  bool _trialExhausted = false;
+  bool _hasStartedTrialInSession = false;
   int _pomodoroSeconds = 25 * 60;
   Timer? _timer;
   int _selectedSoundIndex = 0;
-
-  final List<({String name, IconData icon})> _sounds = const [
-    (name: 'dengiz', icon: Icons.waves_rounded),
-    (name: 'hasharot', icon: Icons.nights_stay_rounded),
-    (name: 'ormon', icon: Icons.forest_rounded),
-    (name: 'qushlar', icon: Icons.flutter_dash),
-    (name: 'sharshara', icon: Icons.water_drop_rounded),
-    (name: 'toglar', icon: Icons.landscape_rounded),
-    (name: 'yomgir', icon: Icons.cloudy_snowing),
-  ];
 
   late AnimationController _pulseController;
 
@@ -47,12 +47,39 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
+    _audioService.addListener(_onAudioUpdate);
+    _loadTrialState();
+  }
+
+  void _onAudioUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadTrialState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final used = prefs.getBool(_keyGuestTrialUsed) ?? false;
+      final started = prefs.getBool(_keyGuestTrialStarted) ?? false;
+      if (used || started) {
+        if (!used) {
+          await prefs.setBool(_keyGuestTrialUsed, true);
+        }
+        if (mounted) {
+          setState(() => _trialExhausted = true);
+        }
+      }
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _pulseController.dispose();
+    _audioService.removeListener(_onAudioUpdate);
+    _audioService.dispose();
     super.dispose();
   }
 
@@ -63,27 +90,152 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
   }
 
   void _togglePomodoroTimer() {
-    setState(() {
-      _isTimerRunning = !_isTimerRunning;
-    });
+    if (_trialExhausted) {
+      _showTrialLimitDialog();
+      return;
+    }
 
-    if (_isTimerRunning) {
+    if (!_isTimerRunning && !_hasStartedTrialInSession) {
+      _hasStartedTrialInSession = true;
+      setState(() => _isTimerRunning = true);
+
+      // Unlock and play selected ambient sound synchronously inside user gesture
+      if (!_audioService.hasActiveSounds) {
+        final sound = AmbientSound.values[_selectedSoundIndex];
+        _audioService.playSound(sound.keyName, assetPath: sound.assetPath);
+      }
+
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setBool(_keyGuestTrialStarted, true);
+      });
+
       _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (t) {
         if (!mounted) return;
-        setState(() {
-          if (_pomodoroSeconds > 0) {
-            _pomodoroSeconds--;
-          } else {
-            _isTimerRunning = false;
-            _pomodoroSeconds = 25 * 60;
-            _timer?.cancel();
-          }
-        });
+        if (_pomodoroSeconds > 1) {
+          setState(() => _pomodoroSeconds--);
+        } else {
+          _completeOrEndTrial();
+        }
       });
-    } else {
-      _timer?.cancel();
+    } else if (_isTimerRunning) {
+      // Ending the active trial session finishes the 1-time guest allowance
+      _completeOrEndTrial();
     }
+  }
+
+  void _completeOrEndTrial() {
+    _timer?.cancel();
+    _audioService.stopAll();
+    setState(() {
+      _isTimerRunning = false;
+      _pomodoroSeconds = 25 * 60;
+      _trialExhausted = true;
+    });
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool(_keyGuestTrialUsed, true);
+    });
+    if (mounted) {
+      _showTrialLimitDialog();
+    }
+  }
+
+  void _onSelectSound(int index) {
+    if (_trialExhausted) {
+      _showTrialLimitDialog();
+      return;
+    }
+
+    final sound = AmbientSound.values[index];
+    setState(() => _selectedSoundIndex = index);
+
+    if (_audioService.isSoundActive(sound.keyName)) {
+      _audioService.pauseSound(sound.keyName);
+      return;
+    }
+
+    for (final activeKey in _audioService.activeSoundKeys.toList()) {
+      if (activeKey != sound.keyName) {
+        _audioService.pauseSound(activeKey);
+      }
+    }
+    _audioService.playSound(sound.keyName, assetPath: sound.assetPath);
+  }
+
+  void _showTrialLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppColors.primaryCyan.withValues(alpha: 0.45)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.accentAmber.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.lock_clock_rounded,
+                color: AppColors.accentAmber,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                LocaleKeys.trialLimitTitle.tr(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          LocaleKeys.trialLimitMsg.tr(),
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              LocaleKeys.cancel.tr(),
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onStartPlanning();
+            },
+            icon: const Icon(Icons.login_rounded, size: 16),
+            label: Text(
+              LocaleKeys.trialLimitCta.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryCyan,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatTimer(int totalSecs) {
@@ -177,7 +329,10 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
                         title: LocaleKeys.periodDaily.tr(),
                         icon: Icons.checklist_rounded,
                         isSelected: _activeTab == 0,
-                        onTap: () => setState(() => _activeTab = 0),
+                        onTap: () {
+                          _audioService.stopAll();
+                          setState(() => _activeTab = 0);
+                        },
                       ),
                       const SizedBox(width: 4),
                       _buildTabButton(
@@ -460,53 +615,173 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
   }
 
   Widget _buildPomodoroPreview() {
+    const sounds = AmbientSound.values;
+
     return Column(
       children: [
+        // 1-Time Guest Trial Status Badge or Lock Banner
+        if (!_trialExhausted)
+          Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.primaryCyan.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.primaryCyan.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.hourglass_top_rounded,
+                  size: 13,
+                  color: AppColors.primaryCyan,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  LocaleKeys.trialBadgeAvailable.tr(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryCyan,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.accentAmber.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.accentAmber,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        LocaleKeys.trialLimitTitle.tr(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  LocaleKeys.trialLimitMsg.tr(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: widget.onStartPlanning,
+                    icon: const Icon(Icons.login_rounded, size: 16),
+                    label: Text(
+                      LocaleKeys.trialLimitCta.tr(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryCyan,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // Pomodoro circular timer with pulsing breathing ring
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             GestureDetector(
               onTap: _togglePomodoroTimer,
-              child: AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) {
-                  final glowRadius = _isTimerRunning ? 8.0 + 8.0 * _pulseController.value : 4.0;
-                  return Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: AppColors.focusGradient,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryGreen.withValues(alpha: _isTimerRunning ? 0.45 : 0.2),
-                          blurRadius: glowRadius,
-                          spreadRadius: _isTimerRunning ? 3 : 1,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _isTimerRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        Text(
-                          _formatTimer(_pomodoroSeconds),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1,
+              child: Opacity(
+                opacity: _trialExhausted ? 0.45 : 1.0,
+                child: AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    final glowRadius = _isTimerRunning
+                        ? 8.0 + 8.0 * _pulseController.value
+                        : 4.0;
+                    return Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: _trialExhausted
+                            ? const LinearGradient(
+                                colors: [Color(0xFF475569), Color(0xFF334155)],
+                              )
+                            : AppColors.focusGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: _trialExhausted
+                                ? Colors.transparent
+                                : AppColors.primaryGreen.withValues(
+                                    alpha: _isTimerRunning ? 0.45 : 0.2,
+                                  ),
+                            blurRadius: glowRadius,
+                            spreadRadius: _isTimerRunning ? 3 : 1,
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _trialExhausted
+                                ? Icons.lock_rounded
+                                : (_isTimerRunning
+                                    ? Icons.stop_rounded
+                                    : Icons.play_arrow_rounded),
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          Text(
+                            _formatTimer(_pomodoroSeconds),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -514,58 +789,95 @@ class _InteractiveTryLiveWidgetState extends State<InteractiveTryLiveWidget>
 
         const SizedBox(height: 16),
 
-        // Mini 7 Ambient Sounds dock
+        // Mini 7 Ambient Sounds dock (real audible playback + gesture unlock)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              for (int index = 0; index < _sounds.length; index++)
+              for (int index = 0; index < sounds.length; index++)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(
-                    onTap: () => setState(() => _selectedSoundIndex = index),
+                    onTap: () => _onSelectSound(index),
                     borderRadius: BorderRadius.circular(12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _selectedSoundIndex == index
-                            ? AppColors.primaryGreen.withValues(alpha: 0.25)
-                            : AppColors.glassSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _selectedSoundIndex == index
-                              ? AppColors.primaryGreen
-                              : AppColors.glassBorder,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _sounds[index].icon,
-                            size: 15,
-                            color: _selectedSoundIndex == index
-                                ? AppColors.primaryGreen
-                                : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _sounds[index].name.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: _selectedSoundIndex == index
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              color: _selectedSoundIndex == index
+                    child: Builder(
+                      builder: (context) {
+                        final sound = sounds[index];
+                        final isSelected = _selectedSoundIndex == index;
+                        final isPlaying = _audioService.isSoundActive(sound.keyName);
+                        final isBuffering = _audioService.isSoundBuffering(sound.keyName);
+
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isPlaying
+                                ? AppColors.primaryGreen.withValues(alpha: 0.25)
+                                : (isSelected
+                                    ? AppColors.primaryCyan.withValues(alpha: 0.14)
+                                    : AppColors.glassSurface),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isPlaying
                                   ? AppColors.primaryGreen
-                                  : AppColors.textSecondary,
+                                  : (isSelected
+                                      ? AppColors.primaryCyan.withValues(alpha: 0.6)
+                                      : AppColors.glassBorder),
+                              width: isPlaying ? 1.3 : 1.0,
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                sound.icon,
+                                size: 15,
+                                color: isPlaying
+                                    ? AppColors.primaryGreen
+                                    : (isSelected
+                                        ? AppColors.primaryCyan
+                                        : AppColors.textSecondary),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                sound.labelKey.tr(),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: (isPlaying || isSelected)
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  color: isPlaying
+                                      ? AppColors.primaryGreen
+                                      : (isSelected
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary),
+                                ),
+                              ),
+                              if (isPlaying) ...[
+                                const SizedBox(width: 5),
+                                if (isBuffering)
+                                  const SizedBox(
+                                    width: 10,
+                                    height: 10,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primaryGreen,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.volume_up_rounded,
+                                    size: 13,
+                                    color: AppColors.primaryGreen,
+                                  ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

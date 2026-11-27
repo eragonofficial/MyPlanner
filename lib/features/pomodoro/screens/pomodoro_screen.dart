@@ -120,49 +120,57 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               child: SafeArea(
               child: Column(
                 children: [
-                  // Top App Bar with Drawer button, Title, and Quick Language Toggle Pills
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.menu_rounded, size: 26),
-                          onPressed: widget.onOpenDrawer,
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                LocaleKeys.pomodoroTitle.tr(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: AppColors.textPrimary,
-                                ),
+                  // Top App Bar with Drawer button, Title, and Language Dropdown
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1080),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.menu_rounded, size: 26),
+                              onPressed: widget.onOpenDrawer,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    LocaleKeys.pomodoroTitle.tr(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    LocaleKeys.pomodoroSubtitle.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                LocaleKeys.pomodoroSubtitle.tr(),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            // Language Selector Dropdown on Pomodoro Screen Top Bar
+                            const LanguageDropdownButton(),
+                          ],
                         ),
-                        // Language Selector Dropdown on Pomodoro Screen Top Bar
-                        const LanguageDropdownButton(),
-                      ],
+                      ),
                     ),
                   ),
 
                   Expanded(
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        children: [
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 760),
+                          child: Column(
+                            children: [
                           const SizedBox(height: 12),
 
                           // Mode Toggles (25+5 vs 50+10) & Session Selector
@@ -395,7 +403,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                           ),
 
                           const SizedBox(height: 16),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

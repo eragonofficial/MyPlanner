@@ -1,6 +1,9 @@
 class SupabaseConstants {
   static const String supabaseUrl = 'https://mrwwmackzhsscsozcoay.supabase.co';
   static const String supabaseAnonKey = 'sb_publishable_l9WwCJFgNKn-ePTyLDSONw_k7ilN8Hs';
+  static const String telegramBotUrl = 'https://t.me/my_planner_uz_bot?start=login';
+  static const String telegramBotHandle = '@my_planner_uz_bot';
+  static const String telegramOtpFunctionUrl = '$supabaseUrl/functions/v1/telegram-otp';
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&

@@ -240,5 +240,27 @@
   "feedback_success_msg": "Фикр-мулоҳазангиз муваффақиятли қабул қилинди. Ёрдамингиз учун миннатдормиз!",
   "feedback_error_empty": "Илтимос, хабарингизни ёзинг",
   "feedback_error_email": "Илтимос, эмаилингиз ёки логинингизни киритинг",
-  "feedback_sender": "Юборувчи"
+  "feedback_sender": "Юборувчи",
+
+  "trial_limit_title": "Бепул синов муддати тугади (1/1)",
+  "trial_limit_msg": "Меҳмон сифатида Помодоро таймеридан фақат 1 марта фойдаланиш мумкин. Барча имкониятлардан чексиз ва бепул фойдаланиш учун тизимга киринг ёки рўйхатдан ўтинг!",
+  "trial_limit_cta": "Кириш / Бепул ҳисоб яратиш",
+  "trial_badge_available": "1 марталик бепул синов",
+
+  "footer_tagline": "Кунлик, ҳафталик, ойлик ва йиллик режаларни бошқариш ҳамда Помодоро фокус таймери.",
+  "footer_quick_links": "Тезкор ҳаволалар",
+  "footer_features": "Имкониятлар",
+  "footer_privacy": "Махфийлик сиёсати",
+  "footer_privacy_desc": "Сизнинг барча режаларингиз ва шахсий маълумотларингиз хавфсиз шифрланган ҳолда булутда сақланади ҳамда учинчи шахсларга берилмайди.",
+  "footer_contact_title": "Алоқа ва қўллаб-қувватлаш",
+  "footer_telegram_support": "Telegram қўллаб-қувватлаш",
+  "footer_email_contact": "Email орқали боғланиш",
+  "footer_created_by": "Муаллиф ва дастурчи: My Planner Team",
+  "footer_rights": "Барча ҳуқуқлар ҳимояланган.",
+
+  "auth_telegram_button": "Telegram орқали давом этиш",
+  "telegram_otp_title": "Telegram орқали кириш",
+  "telegram_otp_subtitle": "1. @my_planner_uz_bot ботига киринг ва Start босинг.\n2. Бот юборган 6 хонали кодни қуйига киритинг:",
+  "telegram_open_bot": "Telegram ботни очиш (@my_planner_uz_bot)",
+  "telegram_otp_invalid": "Код нотўғри ёки муддати тугаган. Ботдан янги код олинг."
 }

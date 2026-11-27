@@ -21,9 +21,23 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage>
     with SingleTickerProviderStateMixin {
+  final GlobalKey _sandboxKey = GlobalKey();
+  final GlobalKey _featuresKey = GlobalKey();
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  void _scrollToSection(GlobalKey key) {
+    final targetContext = key.currentContext;
+    if (targetContext != null) {
+      Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -84,7 +98,8 @@ class _LandingPageState extends State<LandingPage>
                           const SizedBox(height: 24),
 
                           // "Try It Live" Mini-Sandbox Interactive Widget
-                          Padding(
+                          Container(
+                            key: _sandboxKey,
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: InteractiveTryLiveWidget(
                               onStartPlanning: widget.onSignInPressed,
@@ -94,7 +109,10 @@ class _LandingPageState extends State<LandingPage>
                           const SizedBox(height: 64),
 
                           // 3D Tilt Feature Showcase Cards
-                          _buildFeatureShowcase(context, isDesktop),
+                          KeyedSubtree(
+                            key: _featuresKey,
+                            child: _buildFeatureShowcase(context, isDesktop),
+                          ),
 
                           const SizedBox(height: 64),
 
@@ -105,8 +123,6 @@ class _LandingPageState extends State<LandingPage>
 
                           // Footer
                           _buildFooter(context),
-
-                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
@@ -121,6 +137,9 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Widget _buildNavbar(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final showFeedbackText = screenWidth >= 600;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
@@ -129,77 +148,97 @@ class _LandingPageState extends State<LandingPage>
           bottom: BorderSide(color: AppColors.glassBorder, width: 0.8),
         ),
       ),
-      child: Row(
-        children: [
-          // Brand Logo & Title with Gradient Aura
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [AppColors.primaryCyan, AppColors.primaryGreen],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryCyan.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1080),
+          child: Row(
+            children: [
+              // Brand Logo & Title with Gradient Aura
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primaryCyan, AppColors.primaryGreen],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Icon(Icons.timer_rounded, color: Colors.black, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            LocaleKeys.appName.tr(),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              letterSpacing: 0.5,
-            ),
-          ),
-
-          const Spacer(),
-
-          // Feedback Button
-          TextButton.icon(
-            onPressed: () => FeedbackDialog.show(context),
-            icon: const Icon(Icons.rate_review_outlined, size: 16, color: AppColors.textSecondary),
-            label: Text(
-              LocaleKeys.feedbackTitle.tr(),
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
+                child: const Icon(Icons.timer_rounded, color: Colors.black, size: 20),
               ),
-            ),
+              const SizedBox(width: 12),
+              Text(
+                LocaleKeys.appName.tr(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Feedback Button
+              if (showFeedbackText)
+                TextButton.icon(
+                  onPressed: () => FeedbackDialog.show(context),
+                  icon: const Icon(
+                    Icons.rate_review_outlined,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  label: Text(
+                    LocaleKeys.feedbackTitle.tr(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              else
+                IconButton(
+                  onPressed: () => FeedbackDialog.show(context),
+                  tooltip: LocaleKeys.feedbackTitle.tr(),
+                  icon: const Icon(
+                    Icons.rate_review_outlined,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              const SizedBox(width: 8),
+
+              // Language Selector Dropdown Button
+              const LanguageDropdownButton(),
+
+              const SizedBox(width: 12),
+
+              // Sign In CTA Button
+              ElevatedButton.icon(
+                onPressed: widget.onSignInPressed,
+                icon: const Icon(Icons.login_rounded, size: 16),
+                label: Text(
+                  LocaleKeys.signIn.tr(),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryCyan,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-
-          // Language Selector Dropdown Button
-          const LanguageDropdownButton(),
-
-          const SizedBox(width: 14),
-
-          // Sign In CTA Button
-          ElevatedButton.icon(
-            onPressed: widget.onSignInPressed,
-            icon: const Icon(Icons.login_rounded, size: 16),
-            label: Text(
-              LocaleKeys.signIn.tr(),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryCyan,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -476,32 +515,407 @@ class _LandingPageState extends State<LandingPage>
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  void _showPrivacyDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: AppColors.primaryCyan.withValues(alpha: 0.4)),
+        ),
+        title: Row(
           children: [
-            TextButton.icon(
-              onPressed: () => FeedbackDialog.show(context),
-              icon: const Icon(Icons.rate_review_outlined, size: 16, color: AppColors.primaryCyan),
-              label: Text(
-                LocaleKeys.feedbackTitle.tr(),
+            const Icon(Icons.shield_outlined, color: AppColors.primaryCyan, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                LocaleKeys.footerPrivacy.tr(),
                 style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.primaryCyan,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        content: Text(
+          LocaleKeys.footerPrivacyDesc.tr(),
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryCyan,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSupportContactDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: AppColors.primaryGreen.withValues(alpha: 0.4)),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.support_agent_rounded, color: AppColors.primaryGreen, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                LocaleKeys.footerContactTitle.tr(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildContactDetailRow(
+              icon: Icons.send_rounded,
+              color: AppColors.primaryCyan,
+              label: LocaleKeys.footerTelegramSupport.tr(),
+              value: '@my_planner_support',
+            ),
+            const SizedBox(height: 12),
+            _buildContactDetailRow(
+              icon: Icons.email_outlined,
+              color: AppColors.primaryGreen,
+              label: LocaleKeys.footerEmailContact.tr(),
+              value: 'support@my-planner.uz',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              LocaleKeys.cancel.tr(),
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              FeedbackDialog.show(context);
+            },
+            icon: const Icon(Icons.rate_review_outlined, size: 16),
+            label: Text(
+              LocaleKeys.feedbackTitle.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryCyan,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactDetailRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                ),
+                SelectableText(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooterLink({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color ?? AppColors.textSecondary),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: color ?? AppColors.textSecondary,
+                  fontWeight: color != null ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
+
+    final brandColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryCyan, AppColors.primaryGreen],
+                ),
+              ),
+              child: const Icon(Icons.timer_rounded, color: Colors.black, size: 17),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              LocaleKeys.appName.tr(),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
         Text(
-          '${LocaleKeys.appName.tr()} • 2026',
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          LocaleKeys.footerTagline.tr(),
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primaryCyan.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.code_rounded, size: 14, color: AppColors.primaryCyan),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  LocaleKeys.footerCreatedBy.tr(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryCyan,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
+    );
+
+    final linksColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          LocaleKeys.footerQuickLinks.tr(),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildFooterLink(
+          icon: Icons.auto_awesome_outlined,
+          label: LocaleKeys.footerFeatures.tr(),
+          onTap: () => _scrollToSection(_featuresKey),
+        ),
+        _buildFooterLink(
+          icon: Icons.timer_outlined,
+          label: LocaleKeys.landingSandboxPomodoro.tr(),
+          onTap: () => _scrollToSection(_sandboxKey),
+        ),
+        _buildFooterLink(
+          icon: Icons.shield_outlined,
+          label: LocaleKeys.footerPrivacy.tr(),
+          onTap: () => _showPrivacyDialog(context),
+        ),
+      ],
+    );
+
+    final supportColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          LocaleKeys.footerContactTitle.tr(),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildFooterLink(
+          icon: Icons.send_rounded,
+          label: '${LocaleKeys.footerTelegramSupport.tr()} (@my_planner_support)',
+          onTap: () => _showSupportContactDialog(context),
+        ),
+        _buildFooterLink(
+          icon: Icons.email_outlined,
+          label: '${LocaleKeys.footerEmailContact.tr()} (support@my-planner.uz)',
+          onTap: () => _showSupportContactDialog(context),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => FeedbackDialog.show(context),
+          icon: const Icon(Icons.rate_review_outlined, size: 16),
+          label: Text(
+            LocaleKeys.feedbackTitle.tr(),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primaryCyan,
+            side: BorderSide(color: AppColors.primaryCyan.withValues(alpha: 0.5)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      decoration: BoxDecoration(
+        color: AppColors.darkBgSecondary.withValues(alpha: 0.85),
+        border: const Border(
+          top: BorderSide(color: Color(0xFF334155), width: 1.0),
+        ),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1080),
+          child: Column(
+            children: [
+              if (isWide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 4, child: brandColumn),
+                    const SizedBox(width: 32),
+                    Expanded(flex: 3, child: linksColumn),
+                    const SizedBox(width: 24),
+                    Expanded(flex: 4, child: supportColumn),
+                  ],
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    brandColumn,
+                    const SizedBox(height: 24),
+                    linksColumn,
+                    const SizedBox(height: 24),
+                    supportColumn,
+                  ],
+                ),
+              const SizedBox(height: 28),
+              const Divider(color: Color(0xFF334155), height: 1),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      '© 2026 ${LocaleKeys.appName.tr()}. ${LocaleKeys.footerRights.tr()}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    ),
+                    const Text(
+                      'https://my-planner.uz',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primaryCyan,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

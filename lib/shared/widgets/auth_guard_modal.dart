@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/locale_keys.dart';
 import '../../features/auth/screens/auth_screen.dart';
+import '../../features/auth/widgets/telegram_otp_dialog.dart';
 
 class AuthGuardModal extends StatelessWidget {
   final VoidCallback? onAuthSuccess;
@@ -124,6 +125,41 @@ class AuthGuardModal extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Quick Continue with Telegram OTP Button
+              SizedBox(
+                width: double.infinity,
+                child: TelegramSignInButton(
+                  onPressed: () {
+                    TelegramOtpDialog.launchAndShow(
+                      context,
+                      onAuthSuccess: () {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: AppColors.primaryGreen,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              content: Text(
+                                LocaleKeys.signInSuccess.tr(),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          );
+                          Navigator.of(context).pop(true);
+                        }
+                        onAuthSuccess?.call();
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 12),

@@ -240,5 +240,27 @@
   "feedback_success_msg": "Your feedback has been successfully submitted. Thank you for your contribution!",
   "feedback_error_empty": "Please enter your message",
   "feedback_error_email": "Please enter your email or login",
-  "feedback_sender": "Sender"
+  "feedback_sender": "Sender",
+
+  "trial_limit_title": "Free Guest Trial Completed (1/1)",
+  "trial_limit_msg": "Guest visitors can use the live Pomodoro timer once. Sign in or create a free account for unlimited access to Pomodoro and My Planner!",
+  "trial_limit_cta": "Sign In / Create Free Account",
+  "trial_badge_available": "1-Time Free Guest Trial",
+
+  "footer_tagline": "Smart daily, weekly, monthly, and yearly planning with an ambient Study With Me Pomodoro focus timer.",
+  "footer_quick_links": "Quick Links",
+  "footer_features": "Features",
+  "footer_privacy": "Privacy Policy",
+  "footer_privacy_desc": "Your plans and personal data are securely encrypted in the cloud and never shared with third parties.",
+  "footer_contact_title": "Contact & Support",
+  "footer_telegram_support": "Telegram Support",
+  "footer_email_contact": "Email Contact",
+  "footer_created_by": "Created & Developed by My Planner Team",
+  "footer_rights": "All rights reserved.",
+
+  "auth_telegram_button": "Continue with Telegram",
+  "telegram_otp_title": "Sign in with Telegram",
+  "telegram_otp_subtitle": "1. Open @my_planner_uz_bot in Telegram and tap Start.\n2. Enter the 6-digit code sent by the bot below:",
+  "telegram_open_bot": "Open Telegram Bot (@my_planner_uz_bot)",
+  "telegram_otp_invalid": "Invalid or expired code. Please request a new code from the bot."
 }

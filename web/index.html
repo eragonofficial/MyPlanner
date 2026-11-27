@@ -49,10 +49,12 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="My Planner">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
 
   <!-- Favicon & Manifest -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png"/>
   <link rel="manifest" href="manifest.json">
 
   <!-- JSON-LD Structured Data (WebApplication Schema) -->
@@ -81,10 +83,126 @@
     ]
   }
   </script>
+
+  <!-- Instant Zero-Dependency HTML/CSS Splash Screen Styles -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0F172A;
+    }
+
+    #app-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 35%, #1E293B 0%, #0F172A 72%);
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      transition: opacity 0.42s ease, visibility 0.42s ease;
+    }
+
+    #app-splash.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-logo-wrap {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, #00E5FF 0%, #00E676 100%);
+      box-shadow: 0 0 28px rgba(0, 229, 255, 0.35), 0 0 56px rgba(0, 230, 118, 0.18);
+      animation: splashPulse 2s ease-in-out infinite;
+    }
+
+    .splash-logo-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+      object-fit: cover;
+      background: #0F172A;
+    }
+
+    .splash-title {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: #F8FAFC;
+    }
+
+    .splash-subtitle {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #94A3B8;
+      text-align: center;
+      padding: 0 24px;
+    }
+
+    .splash-bar-track {
+      margin-top: 24px;
+      width: 180px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.2);
+      overflow: hidden;
+    }
+
+    .splash-bar-fill {
+      width: 42%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00E5FF, #00E676);
+      animation: splashBar 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes splashPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 24px rgba(0, 229, 255, 0.32);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 38px rgba(0, 230, 118, 0.48);
+      }
+    }
+
+    @keyframes splashBar {
+      0% {
+        transform: translateX(-110%);
+      }
+      100% {
+        transform: translateX(260%);
+      }
+    }
+  </style>
+  <noscript><style>#app-splash{display:none!important;}</style></noscript>
 </head>
 <body>
+  <div id="app-splash" role="status" aria-label="My Planner yuklanmoqda...">
+    <div class="splash-logo-wrap">
+      <img src="favicon.png" alt="My Planner logo" width="84" height="84" />
+    </div>
+    <div class="splash-title">My Planner</div>
+    <div class="splash-subtitle">Kunlik Rejalar va Pomodoro Fokus Taymeri</div>
+    <div class="splash-bar-track">
+      <div class="splash-bar-fill"></div>
+    </div>
+  </div>
+
   <noscript>
-    <main style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:20px;color:#0F172A;">
+    <main style="font-family:sans-serif;max-width:720px;margin:40px auto;padding:20px;color:#F8FAFC;">
       <h1>My Planner — Kunlik, Haftalik, Oylik Rejalar va Pomodoro Fokus Taymeri</h1>
       <p>
         My Planner — bu vaqtni samarali boshqarish, kunlik, haftalik, oylik va yillik maqsadlarni tizimli rejalashtirish hamda
@@ -104,6 +222,25 @@
       </p>
     </main>
   </noscript>
+
+  <script>
+    (function () {
+      function hideSplash() {
+        var splash = document.getElementById('app-splash');
+        if (!splash || splash.classList.contains('is-hidden')) return;
+        splash.classList.add('is-hidden');
+        setTimeout(function () {
+          if (splash && splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+          }
+        }, 450);
+      }
+
+      window.addEventListener('flutter-first-frame', hideSplash, { once: true });
+      // Fallback safety in case event fired before listener or slow cold boot
+      setTimeout(hideSplash, 15000);
+    })();
+  </script>
 
   <script src="flutter_bootstrap.js" async></script>
 </body>

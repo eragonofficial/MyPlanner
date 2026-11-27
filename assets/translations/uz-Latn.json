@@ -240,5 +240,27 @@
   "feedback_success_msg": "Fikr-mulohazangiz muvaffaqiyatli qabul qilindi. Yordamingiz uchun minnatdormiz!",
   "feedback_error_empty": "Iltimos, xabaringizni yozing",
   "feedback_error_email": "Iltimos, emailingiz yoki loginingizni kiriting",
-  "feedback_sender": "Yuboruvchi"
+  "feedback_sender": "Yuboruvchi",
+
+  "trial_limit_title": "Bepul sinov muddati tugadi (1/1)",
+  "trial_limit_msg": "Mehmon sifatida Pomodoro taymeridan faqat 1 marta foydalanish mumkin. Barcha imkoniyatlardan cheksiz va bepul foydalanish uchun tizimga kiring yoki ro'yxatdan o'ting!",
+  "trial_limit_cta": "Kirish / Bepul hisob yaratish",
+  "trial_badge_available": "1 martalik bepul sinov",
+
+  "footer_tagline": "Kunlik, haftalik, oylik va yillik rejalarni boshqarish hamda Pomodoro fokus taymeri.",
+  "footer_quick_links": "Tezkor havolalar",
+  "footer_features": "Imkoniyatlar",
+  "footer_privacy": "Maxfiylik siyosati",
+  "footer_privacy_desc": "Sizning barcha rejalaringiz va shaxsiy ma'lumotlaringiz xavfsiz shifrlangan holda bulutda saqlanadi hamda uchinchi shaxslarga berilmaydi.",
+  "footer_contact_title": "Aloqa va qo'llab-quvvatlash",
+  "footer_telegram_support": "Telegram qo'llab-quvvatlash",
+  "footer_email_contact": "Email orqali bog'lanish",
+  "footer_created_by": "Muallif va dasturchi: My Planner Team",
+  "footer_rights": "Barcha huquqlar himoyalangan.",
+
+  "auth_telegram_button": "Telegram orqali davom etish",
+  "telegram_otp_title": "Telegram orqali kirish",
+  "telegram_otp_subtitle": "1. @my_planner_uz_bot botiga kiring va Start bosing.\n2. Bot yuborgan 6 xonali kodni quyiga kiriting:",
+  "telegram_open_bot": "Telegram botni ochish (@my_planner_uz_bot)",
+  "telegram_otp_invalid": "Kod noto'g'ri yoki muddati tugagan. Botdan yangi kod oling."
 }

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/supabase_constants.dart';
 
@@ -141,6 +143,44 @@ class SupabaseService {
       token: token,
       type: OtpType.sms,
     );
+  }
+
+  static Future<AuthResponse> verifyTelegramOtp({required String code}) async {
+    final supabase = client;
+    if (supabase == null) {
+      throw Exception('Supabase is not initialized');
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(SupabaseConstants.telegramOtpFunctionUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SupabaseConstants.supabaseAnonKey,
+            'Authorization': 'Bearer ${SupabaseConstants.supabaseAnonKey}',
+          },
+          body: jsonEncode({'code': code.trim()}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    Map<String, dynamic> data = {};
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        data = decoded;
+      }
+    } catch (_) {}
+
+    final refreshToken = data['refresh_token'] as String? ??
+        (data['session'] is Map ? data['session']['refresh_token'] as String? : null);
+
+    if (response.statusCode != 200 || refreshToken == null || refreshToken.isEmpty) {
+      throw AuthException(
+        (data['error'] as String?) ?? 'Invalid or expired Telegram code',
+      );
+    }
+
+    return await supabase.auth.setSession(refreshToken);
   }
 
   static Future<void> signOut() async {

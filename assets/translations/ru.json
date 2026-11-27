@@ -240,5 +240,27 @@
   "feedback_success_msg": "Ваш отзыв успешно получен. Спасибо за ваш вклад!",
   "feedback_error_empty": "Пожалуйста, введите ваше сообщение",
   "feedback_error_email": "Пожалуйста, введите ваш email или логин",
-  "feedback_sender": "Отправитель"
+  "feedback_sender": "Отправитель",
+
+  "trial_limit_title": "Пробный сеанс завершён (1/1)",
+  "trial_limit_msg": "В гостевом режиме таймер Помодоро доступен только 1 раз. Войдите или создайте бесплатный аккаунт для безлимитного доступа ко всем функциям!",
+  "trial_limit_cta": "Войти / Создать аккаунт",
+  "trial_badge_available": "1 бесплатный пробный сеанс",
+
+  "footer_tagline": "Управление ежедневными, недельными, месячными и годовыми планами и фокус-таймер Помодоро.",
+  "footer_quick_links": "Быстрые ссылки",
+  "footer_features": "Возможности",
+  "footer_privacy": "Политика конфиденциальности",
+  "footer_privacy_desc": "Все ваши планы и личные данные надежно защищены, хранятся в зашифрованном облаке и не передаются третьим лицам.",
+  "footer_contact_title": "Контакты и поддержка",
+  "footer_telegram_support": "Поддержка в Telegram",
+  "footer_email_contact": "Связаться по Email",
+  "footer_created_by": "Автор и разработчик: My Planner Team",
+  "footer_rights": "Все права защищены.",
+
+  "auth_telegram_button": "Продолжить через Telegram",
+  "telegram_otp_title": "Вход через Telegram",
+  "telegram_otp_subtitle": "1. Откройте бота @my_planner_uz_bot и нажмите Start.\n2. Введите полученный 6-значный код ниже:",
+  "telegram_open_bot": "Открыть Telegram-бота (@my_planner_uz_bot)",
+  "telegram_otp_invalid": "Неверный или просроченный код. Получите новый код в боте."
 }

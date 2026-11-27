@@ -240,5 +240,27 @@
   "feedback_success_msg": "피드백이 성공적으로 제출되었습니다. 소중한 의견 감사합니다!",
   "feedback_error_empty": "메시지를 입력해 주세요",
   "feedback_error_email": "이메일 또는 아이디를 입력해 주세요",
-  "feedback_sender": "보낸 사람"
+  "feedback_sender": "보낸 사람",
+
+  "trial_limit_title": "무료 체험 세션이 종료되었습니다 (1/1)",
+  "trial_limit_msg": "게스트 모드에서는 뽀모도로 타이머를 1회만 체험할 수 있습니다. 로그인하거나 무료 계정을 만들어 모든 기능을 무제한으로 이용하세요!",
+  "trial_limit_cta": "로그인 / 무료 계정 만들기",
+  "trial_badge_available": "1회 무료 게스트 체험",
+
+  "footer_tagline": "일간, 주간, 월간, 연간 계획 관리 및 자연의 소리와 함께하는 뽀모도로 집중 타이머.",
+  "footer_quick_links": "빠른 링크",
+  "footer_features": "주요 기능",
+  "footer_privacy": "개인정보 처리방침",
+  "footer_privacy_desc": "모든 계획과 개인정보는 클라우드에 안전하게 암호화되어 저장되며 제3자에게 제공되지 않습니다.",
+  "footer_contact_title": "문의 및 고객지원",
+  "footer_telegram_support": "Telegram 고객지원",
+  "footer_email_contact": "이메일 문의",
+  "footer_created_by": "제작 및 개발: My Planner Team",
+  "footer_rights": "All rights reserved.",
+
+  "auth_telegram_button": "Telegram으로 계속하기",
+  "telegram_otp_title": "Telegram으로 로그인",
+  "telegram_otp_subtitle": "1. 텔레그램에서 @my_planner_uz_bot 을 열고 Start를 누르세요.\n2. 봇이 보낸 6자리 코드를 아래에 입력하세요:",
+  "telegram_open_bot": "Telegram 봇 열기 (@my_planner_uz_bot)",
+  "telegram_otp_invalid": "잘못되었거나 만료된 코드입니다. 봇에서 새 코드를 받으세요."
 }

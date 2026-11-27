@@ -108,35 +108,40 @@ class _YearlyDashboardScreenState extends State<YearlyDashboardScreen> {
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Year Selector Bar with Leap Year indicator
-                _buildYearSelector(isLeap: isLeap, daysInYear: daysInYear),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1080),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Year Selector Bar with Leap Year indicator
+                    _buildYearSelector(isLeap: isLeap, daysInYear: daysInYear),
 
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                // 365/366-Day Completion Overview Card
-                _buildOverviewCard(
-                  completed: completedYearTasks,
-                  total: totalYearTasks,
-                  percentage: completionRate,
-                  streak: streak,
-                  daysInYear: daysInYear,
+                    // 365/366-Day Completion Overview Card
+                    _buildOverviewCard(
+                      completed: completedYearTasks,
+                      total: totalYearTasks,
+                      percentage: completionRate,
+                      streak: streak,
+                      daysInYear: daysInYear,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Period Breakdown Cards (Daily, Weekly, Monthly, Yearly)
+                    _buildPeriodBreakdown(yearNotes),
+
+                    const SizedBox(height: 24),
+
+                    // 365/366-Day Activity Heatmap Grid
+                    _buildHeatmapSection(completionMap, daysInYear),
+
+                    const SizedBox(height: 32),
+                  ],
                 ),
-
-                const SizedBox(height: 20),
-
-                // Period Breakdown Cards (Daily, Weekly, Monthly, Yearly)
-                _buildPeriodBreakdown(yearNotes),
-
-                const SizedBox(height: 24),
-
-                // 365/366-Day Activity Heatmap Grid
-                _buildHeatmapSection(completionMap, daysInYear),
-
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
           ),
         ),

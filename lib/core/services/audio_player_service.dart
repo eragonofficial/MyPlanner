@@ -7,6 +7,7 @@ import '../../features/pomodoro/models/pomodoro_state.dart';
 class AudioPlayerService extends ChangeNotifier {
   final Map<String, AudioPlayer> _players = {};
   final Map<String, bool> _bufferingStates = {};
+  final Set<String> _loadedSoundKeys = {};
   final Set<String> _activeSoundKeys = {};
 
   double _volume = 0.7;
@@ -24,47 +25,55 @@ class AudioPlayerService extends ChangeNotifier {
 
   bool isSoundBuffering(String soundKey) => _bufferingStates[soundKey] == true;
 
-  /// Pre-buffers all 7 ambient audio tracks asynchronously on screen init
-  /// so tapping any sound icon triggers instant playback with zero decoding delay.
+  void _attachStateListener(String soundKey, AudioPlayer player) {
+    player.playerStateStream.listen((playerState) {
+      final isBuffering =
+          playerState.processingState == ProcessingState.buffering ||
+              playerState.processingState == ProcessingState.loading;
+      if (_bufferingStates[soundKey] != isBuffering) {
+        _bufferingStates[soundKey] = isBuffering;
+        notifyListeners();
+      }
+    });
+  }
+
+  /// Registers and prepares all 7 ambient audio tracks in parallel on init.
+  /// On Web, uses `preload: false` during setup so HTTP connections stay free
+  /// and `play()` executes directly inside user tap gestures without autoplay blocking.
   Future<void> preloadAll(List<AmbientSound> sounds) async {
     if (_isPreloaded || _isPreloading) return;
     _isPreloading = true;
 
-    for (final sound in sounds) {
-      if (_players.containsKey(sound.keyName)) continue;
+    await Future.wait(sounds.map((sound) async {
+      if (_players.containsKey(sound.keyName) &&
+          _loadedSoundKeys.contains(sound.keyName)) {
+        return;
+      }
 
       try {
-        final player = AudioPlayer();
+        final player = _players[sound.keyName] ?? AudioPlayer();
         _players[sound.keyName] = player;
-        _bufferingStates[sound.keyName] = true;
+        _bufferingStates[sound.keyName] = !kIsWeb;
+        _attachStateListener(sound.keyName, player);
 
-        player.playerStateStream.listen((playerState) {
-          final isBuffering =
-              playerState.processingState == ProcessingState.buffering ||
-                  playerState.processingState == ProcessingState.loading;
-          if (_bufferingStates[sound.keyName] != isBuffering) {
-            _bufferingStates[sound.keyName] = isBuffering;
-            notifyListeners();
-          }
-        });
-
+        await player.setAsset(sound.assetPath, preload: !kIsWeb);
         await player.setLoopMode(LoopMode.one);
         await player.setVolume(_volume);
-        // Preload asset immediately into memory/decoder
-        await player.setAsset(sound.assetPath, preload: true);
+        _loadedSoundKeys.add(sound.keyName);
         _bufferingStates[sound.keyName] = false;
       } catch (e) {
         debugPrint('Audio preload notice (${sound.keyName}): $e');
         _bufferingStates[sound.keyName] = false;
       }
-    }
+    }));
 
     _isPreloaded = true;
     _isPreloading = false;
     notifyListeners();
   }
 
-  /// Plays a preloaded ambient sound track with ZERO latency.
+  /// Plays an ambient sound track, calling `player.play()` before any `await`
+  /// when pre-registered so Web browsers unlock audio within the user gesture.
   Future<bool> playSound(
     String soundKey, {
     String? assetPath,
@@ -72,47 +81,49 @@ class AudioPlayerService extends ChangeNotifier {
   }) async {
     AudioPlayer? player = _players[soundKey];
 
-    // Fallback if not yet preloaded
-    if (player == null) {
-      if (assetPath == null) return false;
+    if (player != null && _loadedSoundKeys.contains(soundKey)) {
+      _activeSoundKeys.add(soundKey);
+      _isPaused = false;
       try {
-        player = AudioPlayer();
-        _players[soundKey] = player;
-        _bufferingStates[soundKey] = true;
-
-        player.playerStateStream.listen((playerState) {
-          final isBuffering =
-              playerState.processingState == ProcessingState.buffering ||
-                  playerState.processingState == ProcessingState.loading;
-          if (_bufferingStates[soundKey] != isBuffering) {
-            _bufferingStates[soundKey] = isBuffering;
-            notifyListeners();
-          }
-        });
-
-        await player.setLoopMode(LoopMode.one);
-        await player.setVolume(_volume);
-        await player.setAsset(assetPath, preload: true);
-        _bufferingStates[soundKey] = false;
+        // Trigger play synchronously inside user gesture before any await
+        final playFuture = player.play();
+        notifyListeners();
+        await playFuture;
+        return true;
       } catch (e) {
-        debugPrint('Audio asset notice ($assetPath): $e');
-        _bufferingStates[soundKey] = false;
-        if (onAssetMissing != null) {
-          onAssetMissing(soundKey);
-        }
+        debugPrint('Audio play error ($soundKey): $e');
         return false;
       }
     }
 
-    _activeSoundKeys.add(soundKey);
-    _isPaused = false;
-    notifyListeners();
+    if (assetPath == null) return false;
 
     try {
+      player ??= AudioPlayer();
+      _players[soundKey] = player;
+      _bufferingStates[soundKey] = true;
+      _attachStateListener(soundKey, player);
+
+      _activeSoundKeys.add(soundKey);
+      _isPaused = false;
+      notifyListeners();
+
+      await player.setAsset(assetPath, preload: !kIsWeb);
+      await player.setLoopMode(LoopMode.one);
+      await player.setVolume(_volume);
+      _loadedSoundKeys.add(soundKey);
+      _bufferingStates[soundKey] = false;
       await player.play();
+      notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('Audio play error ($soundKey): $e');
+      debugPrint('Audio asset notice ($assetPath): $e');
+      _activeSoundKeys.remove(soundKey);
+      _bufferingStates[soundKey] = false;
+      notifyListeners();
+      if (onAssetMissing != null) {
+        onAssetMissing(soundKey);
+      }
       return false;
     }
   }

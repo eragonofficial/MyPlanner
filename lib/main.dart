@@ -35,14 +35,12 @@ void main() async {
     ),
   );
 
-  // Initialize Core Services
+  // Initialize Core Services needed for initial frame cleanly
   final localStorage = await LocalStorageService.create();
   await SupabaseService.initialize();
-  await NotificationService().initialize();
-  await NotificationService().requestPermissions();
   final audioPlayer = AudioPlayerService();
 
-  // Initialize Repositories and Controllers
+  // Initialize Repositories and Controllers (cached data renders immediately)
   final plannerRepository = PlannerRepository(localStorage);
   final plannerController = PlannerController(plannerRepository);
   final pomodoroController = PomodoroController(audioPlayer);
@@ -60,6 +58,14 @@ void main() async {
       ),
     ),
   );
+
+  // Defer notification engine setup until after the first frame renders
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    if (!kIsWeb) {
+      await NotificationService().initialize();
+      await NotificationService().requestPermissions();
+    }
+  });
 }
 
 class MyPlannerApp extends StatelessWidget {

@@ -26,7 +26,6 @@ class PomodoroController extends ChangeNotifier {
   PomodoroController(this._audioPlayer) {
     _resetToCurrentMode();
     _audioPlayer.addListener(_onAudioServiceUpdate);
-    preloadSounds();
   }
 
   void _onAudioServiceUpdate() {
@@ -222,8 +221,8 @@ class PomodoroController extends ChangeNotifier {
       },
     );
 
-    // If timer is currently paused or in break phase, pause audio immediately
-    if (_isPaused || _phase != PomodoroPhase.focus) {
+    // Only auto-pause if currently in break phase; during focus phase play immediately
+    if (_phase != PomodoroPhase.focus) {
       await _audioPlayer.pauseAll();
     }
 

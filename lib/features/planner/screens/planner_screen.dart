@@ -355,6 +355,77 @@ class PlannerScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAnimatedNoteCard(
+    BuildContext context,
+    NoteModel note,
+    int index,
+  ) {
+    final delayMs = (index * 35).clamp(0, 300);
+
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('stagger_${note.id}'),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 320 + delayMs),
+      curve: Curves.easeOutCubic,
+      builder: (context, animVal, child) {
+        return Transform.translate(
+          offset: Offset(0, 18 * (1.0 - animVal)),
+          child: Opacity(
+            opacity: animVal.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: NoteCard(
+        note: note,
+        onToggle: () {
+          if (!_checkAuth(context)) return;
+          controller.toggleComplete(note);
+        },
+        onEdit: () {
+          if (!_checkAuth(context)) return;
+          _showAddEditDialog(context, note);
+        },
+        onDelete: () {
+          if (!_checkAuth(context)) return;
+          _confirmDelete(context, note);
+        },
+        onReschedule: () async {
+          if (!_checkAuth(context)) return;
+          await controller.rescheduleNote(note);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: AppColors.darkBgSecondary,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                content: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.primaryGreen,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      LocaleKeys.rescheduledSuccess.tr(),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -492,8 +563,15 @@ class PlannerScreen extends StatelessWidget {
               color: AppColors.primaryCyan,
               backgroundColor: AppColors.darkBgSecondary,
               onRefresh: controller.syncWithCloud,
-              child: CustomScrollView(
-              slivers: [
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1080),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.sizeOf(context).width > 850 ? 24 : 0,
+                    ),
+                    child: CustomScrollView(
+                      slivers: [
                 // Guest Banner (when unauthenticated)
                 if (isGuest)
                   SliverToBoxAdapter(
@@ -842,73 +920,45 @@ class PlannerScreen extends StatelessWidget {
                       ),
                     ),
                   )
+                else if (MediaQuery.sizeOf(context).width >= 900)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, rowIndex) {
+                        final firstIndex = rowIndex * 2;
+                        final secondIndex = firstIndex + 1;
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _buildAnimatedNoteCard(
+                                context,
+                                displayNotes[firstIndex],
+                                firstIndex,
+                              ),
+                            ),
+                            Expanded(
+                              child: secondIndex < displayNotes.length
+                                  ? _buildAnimatedNoteCard(
+                                      context,
+                                      displayNotes[secondIndex],
+                                      secondIndex,
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        );
+                      },
+                      childCount: (displayNotes.length / 2).ceil(),
+                    ),
+                  )
                 else
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final note = displayNotes[index];
-                        final delayMs = (index * 35).clamp(0, 300);
-
-                        return TweenAnimationBuilder<double>(
-                          key: ValueKey('stagger_${note.id}'),
-                          tween: Tween<double>(begin: 0.0, end: 1.0),
-                          duration: Duration(milliseconds: 320 + delayMs),
-                          curve: Curves.easeOutCubic,
-                          builder: (context, animVal, child) {
-                            return Transform.translate(
-                              offset: Offset(0, 18 * (1.0 - animVal)),
-                              child: Opacity(
-                                opacity: animVal.clamp(0.0, 1.0),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: NoteCard(
-                            note: note,
-                            onToggle: () {
-                              if (!_checkAuth(context)) return;
-                              controller.toggleComplete(note);
-                            },
-                            onEdit: () {
-                              if (!_checkAuth(context)) return;
-                              _showAddEditDialog(context, note);
-                            },
-                            onDelete: () {
-                              if (!_checkAuth(context)) return;
-                              _confirmDelete(context, note);
-                            },
-                            onReschedule: () async {
-                              if (!_checkAuth(context)) return;
-                              await controller.rescheduleNote(note);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: AppColors.darkBgSecondary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_rounded,
-                                            color: AppColors.primaryGreen, size: 18),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          LocaleKeys.rescheduledSuccess.tr(),
-                                          style: const TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        );
-                      },
+                      (context, index) => _buildAnimatedNoteCard(
+                        context,
+                        displayNotes[index],
+                        index,
+                      ),
                       childCount: displayNotes.length,
                     ),
                   ),
@@ -916,6 +966,9 @@ class PlannerScreen extends StatelessWidget {
                 const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],
             ),
+                  ),
+                ),
+              ),
           ),
         ),
           floatingActionButton: BouncyButton(
